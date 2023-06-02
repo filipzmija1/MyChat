@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>
+        {% block title %}
+            Home
+        {% endblock %}
+    </title>
+</head>
+<body>
+    <a href="/">Home</a> | 
+    
+    <hr>
+    {% block content %}
+        <h1>{{ welcome }} </h1>
+        <a href="/create-room">Create your own room</a>
+    {% endblock %}
+</body>
+</html>

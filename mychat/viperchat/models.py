@@ -17,4 +17,5 @@ class Message(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
+    edited = models.BooleanField(default=False)
     
