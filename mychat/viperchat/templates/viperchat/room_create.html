@@ -1,0 +1,12 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %} Create room {% endblock %}
+
+
+{% block content %}
+    <h1>New room</h1>
+    <form action="" method="POST">
+        {{ form.as_p }}
+        <input type="submit" value="Create room">
+    </form>
+{% endblock %}
