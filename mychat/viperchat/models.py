@@ -1,20 +1,21 @@
 from django.db import models
-from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AbstractUser
 
-
-User = get_user_model()
+class CustomUser(AbstractUser):
+    friends = models.ManyToManyField('self', blank=True)
+    username = models.SlugField(unique=True, max_length=150)
 
 
 class Room(models.Model):
     name = models.CharField(max_length=100)
     description = models.TextField()
-    users = models.ManyToManyField(User)
+    users = models.ManyToManyField(CustomUser)
     is_private = models.BooleanField(default=False)
 
 
 class Message(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
+    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
     edited = models.BooleanField(default=False)
