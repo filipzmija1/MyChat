@@ -15,12 +15,13 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 import viperchat.views as vchat
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', vchat.HomePage.as_view()),
     path('create-room/', vchat.CreateRoom.as_view()),
-    
+    path('accounts/', include(('django.contrib.auth.urls', 'auth'), namespace='accounts')),
+
 ]

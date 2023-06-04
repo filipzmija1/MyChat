@@ -11,7 +11,6 @@ class HomePage(View):
     def get(self, request, *args, **kwargs):
         context = {
             'welcome': 'Welcome to great chat',
-
         }
         return render(request, self.template_name, context)
     
