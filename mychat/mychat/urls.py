@@ -22,6 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', vchat.HomePage.as_view()),
     path('create-room/', vchat.CreateRoom.as_view()),
-    path('accounts/', include(('django.contrib.auth.urls', 'auth'), namespace='accounts')),
+    path('accounts/', include('allauth.urls')),
 
 ]

@@ -37,6 +37,13 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # 3rd-party apps
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+
+    # Local
     'viperchat.apps.ViperchatConfig'
 ]
 
@@ -125,3 +132,12 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 AUTH_USER_MODEL = 'viperchat.CustomUser'
+
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+
+SITE_ID = 1
