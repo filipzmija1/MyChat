@@ -23,3 +23,7 @@ class CreateRoom(LoginRequiredMixin, CreateView):
     def form_valid(self, form):
         form.instance.creator = self.request.user
         return super().form_valid(form)
+        
+        
+class RoomList(View):
+    pass
