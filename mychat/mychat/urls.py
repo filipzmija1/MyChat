@@ -24,5 +24,6 @@ urlpatterns = [
     path('create-room/', vchat.CreateRoom.as_view()),
     path('accounts/', include('allauth.urls')),
     path('users/', vchat.UserList.as_view()),
-
+    path('rooms/', vchat.RoomList.as_view()),
+    
 ]
