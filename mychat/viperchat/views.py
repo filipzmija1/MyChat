@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.views import View
 from django.views.generic.edit import CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.views.generic import ListView
 from .models import Room
 
 class HomePage(View):
@@ -26,4 +27,8 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         
         
 class RoomList(View):
+    pass
+
+
+class UserList(ListView):
     pass
