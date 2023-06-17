@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'django_email_verification'
 
     # Local
     'viperchat.apps.ViperchatConfig'
