@@ -42,10 +42,10 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'django_email_verification'
+    'django_email_verification',
 
     # Local
-    'viperchat.apps.ViperchatConfig'
+    'viperchat.apps.ViperchatConfig',
 ]
 
 MIDDLEWARE = [
@@ -133,6 +133,22 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 AUTH_USER_MODEL = 'viperchat.CustomUser'
+
+
+# EMAIL VERIFICATION
+def verified_callback(user):
+    user.is_active = True
+
+
+EMAIL_VERIFIED_CALLBACK = verified_callback
+EMAIL_FROM_ADDRESS = 'testdjangoapp381@gmail.com'
+EMAIL_MAIL_SUBJECT = 'Confirm your email'
+EMAIL_MAIL_HTML = 'viperchat/mail_body.html'
+EMAIL_MAIL_PLAIN = 'viperchat/mail_body.txt'
+EMAIL_MAIL_TOKEN_LIFE = 14400
+EMAIL_PAGE_TEMPLATE = 'viperchat/confirm_email.html'
+EMAIL_PAGE_DOMAIN = 'http://localhost:8000'
+EMAIL_MAIL_PAGE_TEMPLATE = 'viperchat/confirm_email.html'
 
 
 # Django Email Backend
