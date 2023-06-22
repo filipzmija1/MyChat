@@ -1,0 +1,9 @@
+{% extends 'viperchat/base.html' %}
+
+{% block content %}
+<h2>{{ room.name }}</h2>
+About room: {{ room.description }}<br>
+Users: {% for user in room.users.all %}
+{{ user.username }}, 
+{% endfor %}
+{% endblock %}

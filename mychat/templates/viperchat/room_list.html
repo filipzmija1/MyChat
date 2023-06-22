@@ -1,0 +1,8 @@
+{% extends 'viperchat/base.html' %}
+
+{% block content %}
+<h2>Public rooms</h2>
+{% for  room in room_list %}
+<li><a href='{{ room.id }}'>{{ room.name }}</a> </li>
+{% endfor %}
+{% endblock %}
