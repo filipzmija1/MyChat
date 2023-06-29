@@ -1,4 +1,5 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
+from django.db import models
 from django.shortcuts import render
 from django.views import View
 from django.views.generic.edit import CreateView
@@ -37,16 +38,23 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         return f'/rooms/{self.object.pk}'
         
 class RoomList(ListView):
-    """Show every room"""
+    """Shows every room"""
     model = Room
     paginate_by = 20
     
 
 class RoomDetails(DetailView):
+    """Shows room details"""
     model = Room
     context_object_name = 'room'
     
 
 class UserProfile(DetailView):
     model = User
+    template_name = 'viperchat/user_profile.html'
     context_object_name = 'user'
+
+    def get_object(self, queryset=None):
+        username = self.kwargs['username']
+        user = User.objects.get(username=username)
+        return user

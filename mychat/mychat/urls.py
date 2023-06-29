@@ -25,5 +25,6 @@ urlpatterns = [
     path('accounts/', include('allauth.urls')),
     path('rooms/', vchat.RoomList.as_view(), name='rooms'),
     path('rooms/<uuid:pk>', vchat.RoomDetails.as_view(), name='room_detail'),
+    path('user/<slug:username>', vchat.UserProfile.as_view(), name='user_detail'),
 
 ]
