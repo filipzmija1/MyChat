@@ -4,6 +4,7 @@
 
 {% block content %}
 <h2>Profile</h2>
+<a href="{% url 'edit_profile' user.username %}">Edit profile</a><br>
 Username: {{ user.username }} <br>
 Email: {{ user.email }}<br>
 First name: {{ user.first_name }}<br>
@@ -11,4 +12,6 @@ Surname: {{ user.last_name }}<br>
 Friends: {% for friend in user.friends_set.all %}
             {{ friend.username }}<br>
         {% endfor %}
+
+
 {% endblock %}

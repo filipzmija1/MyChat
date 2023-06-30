@@ -2,10 +2,11 @@ from typing import Any, Dict, Optional
 from django.db import models
 from django.shortcuts import render
 from django.views import View
-from django.views.generic.edit import CreateView
+from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.contrib.auth import get_user_model
+from django.core.exceptions import PermissionDenied
 
 from .models import Room
 
@@ -50,6 +51,7 @@ class RoomDetails(DetailView):
     
 
 class UserProfile(DetailView):
+    """Shows user profile"""
     model = User
     template_name = 'viperchat/user_profile.html'
     context_object_name = 'user'
@@ -57,4 +59,20 @@ class UserProfile(DetailView):
     def get_object(self, queryset=None):
         username = self.kwargs['username']
         user = User.objects.get(username=username)
+        return user
+    
+
+class UserProfileEdit(UpdateView):
+    """This view is destined to change user data"""
+    mdoel = User
+    template_name = 'viperchat/user_edit.html'
+    context_object_name = 'user'
+    fields = ['first_name', 'last_name']
+
+    def get_object(self, queryset=None):
+        username = self.kwargs['username']
+        user = User.objects.get(username=username)
+        logged_user = self.request.user
+        if username != logged_user.username:
+            raise PermissionDenied
         return user
