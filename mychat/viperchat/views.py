@@ -1,14 +1,21 @@
 from typing import Any, Dict, Optional
 from django.db import models
-from django.shortcuts import render
+from django.forms.models import BaseModelForm
+from django.http import HttpResponse
+from django.shortcuts import render, redirect
 from django.views import View
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
+from django.contrib.auth.hashers import check_password
+from django.contrib.auth.password_validation import validate_password
+from django.contrib.messages.views import SuccessMessageMixin
+from django.urls import reverse
 
 from .models import Room
+from .forms import ResetPasswordForm
 
 
 User = get_user_model()
@@ -62,9 +69,9 @@ class UserProfile(DetailView):
         return user
     
 
-class UserProfileEdit(UpdateView):
+class UserProfileEdit(LoginRequiredMixin, UpdateView):
     """This view is destined to change user data"""
-    mdoel = User
+    model = User
     template_name = 'viperchat/user_edit.html'
     context_object_name = 'user'
     fields = ['first_name', 'last_name']
@@ -76,3 +83,44 @@ class UserProfileEdit(UpdateView):
         if username != logged_user.username:
             raise PermissionDenied
         return user
+    
+
+class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):
+    """This view is destined to change user password (you can do this by enter your old password)"""
+    model = User
+    template_name = 'viperchat/edit_password.html'
+    context_object_name = 'user'
+    form_class = ResetPasswordForm
+    success_message = 'Password changed successfully'
+
+    def get_object(self, queryset=None):
+        username = self.kwargs['username']
+        user = User.objects.get(username=username)
+        logged_user = self.request.user
+        if username != logged_user.username:
+            raise PermissionDenied
+        return user
+
+    def form_valid(self, form):
+        old_password = form.cleaned_data['old_password']
+        new_password = form.cleaned_data['new_password']
+        confirm_password = form.cleaned_data['confirm_password']
+        user = self.request.user
+        if check_password(old_password, user.password):
+            if new_password == confirm_password:
+                try:
+                    validate_password(new_password, user=user)
+                except Exception as e:
+                    form.add_error('new_password', str(e))
+                    return self.form_invalid(form)
+                user.set_password(new_password)
+                user.save()
+                return redirect(reverse('user_detail', kwargs={'username': user.username}))
+            else:
+                form.add_error('confirm_password', 'New password and confirm password do not match')
+                return self.form_invalid(form)
+        else:
+            form.add_error('old_password', 'Old password does not match')
+            return self.form_invalid(form)
+
+

@@ -4,6 +4,11 @@
 
 {% block content %}
 <h2>Profile</h2>
+{% if messages %}
+    {% for message in messages %}
+        <span style="color : green"> <b>{{ message }}</b></span><br>
+    {% endfor %}
+{% endif %}
 <a href="{% url 'edit_profile' user.username %}">Edit profile</a><br>
 Username: {{ user.username }} <br>
 Email: {{ user.email }}<br>
