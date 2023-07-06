@@ -11,15 +11,17 @@
 </form>
 
 <h2>Results:</h2>
-<ul>
-  {% for result in search_result %}
-    {% if result.name %}
+{% if search_result %}
+  <ul>
+    {% for result in search_result %}
+      {% if result.name %}
         <li><a href='{% url "room_detail" result.pk %}'>{{ result.name }}</a></li> 
-    {% elif result.username %}
+      {% elif result.username %}
         <li><a href='{% url "user_detail" result.username %}'>{{ result.username }}</a></li> 
-    {% else %}
-        No matching query
-        {% endif %}
-  {% endfor %}
-</ul>
+      {% endif %}
+    {% endfor %}
+  </ul>
+{% else %}
+  <p>No matching query.</p>
+{% endif %}
 {% endblock %}

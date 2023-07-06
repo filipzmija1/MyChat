@@ -11,6 +11,7 @@
 <body>
     <a href="{% url 'home' %}">Home</a> | 
     <a href="{% url 'rooms' %}">Rooms</a> |
+    <a href="{% url 'search' %}">Search</a> |
 
     {% if user.is_authenticated %}
         <a href="{% url 'user_detail' user.username %}">{{ user.username }} </a> |

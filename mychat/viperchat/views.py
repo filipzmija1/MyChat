@@ -130,7 +130,6 @@ class AddFriend(LoginRequiredMixin, UpdateView):
     model = User
     
 
-
 class SearchUserOrRoom(FormView):
     """This view is destined to search users and/or rooms"""
     form_class = SearchForm
@@ -140,12 +139,15 @@ class SearchUserOrRoom(FormView):
         search_by = form.cleaned_data['search_by']
         search_value = form.cleaned_data['search']
         search_result = None
-        if search_by == 'room':
-            search_result = Room.objects.filter(
-                Q(name__icontains=search_value) | 
-                Q(name__startswith=search_value))
-        if search_by == 'user':
-            search_result = User.objects.filter(
-                Q(username__icontains=search_value) | 
-                Q(username__startswith=search_value))
+        if search_value:
+            if search_by == 'room':
+                search_result = Room.objects.filter(
+                    Q(name__icontains=search_value) | 
+                    Q(name__startswith=search_value))
+            if search_by == 'user':
+                search_result = User.objects.filter(
+                    Q(username__icontains=search_value) | 
+                    Q(username__startswith=search_value))
         return render(self.request, 'viperchat/search_form.html', self.get_context_data(form=form, search_result=search_result))
+    
+
