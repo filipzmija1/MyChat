@@ -1,0 +1,25 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %}Search {% endblock %}
+
+{% block content %}
+<h1>Search</h1>
+<form method="POST" action="">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Search">
+</form>
+
+<h2>Results:</h2>
+<ul>
+  {% for result in search_result %}
+    {% if result.name %}
+        <li><a href='{% url "room_detail" result.pk %}'>{{ result.name }}</a></li> 
+    {% elif result.username %}
+        <li><a href='{% url "user_detail" result.username %}'>{{ result.username }}</a></li> 
+    {% else %}
+        No matching query
+        {% endif %}
+  {% endfor %}
+</ul>
+{% endblock %}

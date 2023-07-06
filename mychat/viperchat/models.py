@@ -15,7 +15,7 @@ class Room(models.Model):
         primary_key=True,
         editable=False
     )
-    name = models.CharField(max_length=155)
+    name = models.CharField(max_length=155, unique=True)
     description = models.TextField()
     users = models.ManyToManyField(CustomUser, blank=True)
     creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='creator')

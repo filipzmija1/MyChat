@@ -1,7 +1,8 @@
 from typing import Any, Dict, Optional
 from django.db import models
+from django.db.models import Q
 from django.forms.models import BaseModelForm
-from django.http import HttpResponse
+from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
 from django.views.generic.edit import CreateView, UpdateView, FormView
@@ -15,7 +16,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
 
 from .models import Room
-from .forms import ResetPasswordForm
+from .forms import ResetPasswordForm, SearchForm
 
 
 User = get_user_model()
@@ -124,3 +125,27 @@ class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):
             return self.form_invalid(form)
 
 
+class AddFriend(LoginRequiredMixin, UpdateView):
+    """This view is destined to add another user to friendlist"""
+    model = User
+    
+
+
+class SearchUserOrRoom(FormView):
+    """This view is destined to search users and/or rooms"""
+    form_class = SearchForm
+    template_name = 'viperchat/search_form.html'
+
+    def form_valid(self, form):
+        search_by = form.cleaned_data['search_by']
+        search_value = form.cleaned_data['search']
+        search_result = None
+        if search_by == 'room':
+            search_result = Room.objects.filter(
+                Q(name__icontains=search_value) | 
+                Q(name__startswith=search_value))
+        if search_by == 'user':
+            search_result = User.objects.filter(
+                Q(username__icontains=search_value) | 
+                Q(username__startswith=search_value))
+        return render(self.request, 'viperchat/search_form.html', self.get_context_data(form=form, search_result=search_result))

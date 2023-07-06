@@ -9,7 +9,9 @@
         <span style="color : green"> <b>{{ message }}</b></span><br>
     {% endfor %}
 {% endif %}
+{% if request.user == user %}
 <a href="{% url 'edit_profile' user.username %}">Edit profile</a><br>
+{% endif %}
 Username: {{ user.username }} <br>
 Email: {{ user.email }}<br>
 First name: {{ user.first_name }}<br>

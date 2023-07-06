@@ -35,3 +35,12 @@ class ResetPasswordForm(forms.Form):
     old_password = forms.CharField(widget=forms.PasswordInput)
     new_password = forms.CharField(widget=forms.PasswordInput)
     confirm_password = forms.CharField(widget=forms.PasswordInput)
+
+
+class SearchForm(forms.Form):
+    CHOICES = (
+        ('room', 'room'),
+        ('user', 'user'),
+    )
+    search = forms.CharField(min_length=3, required=False)
+    search_by = forms.ChoiceField(choices=CHOICES)
