@@ -4,32 +4,45 @@ from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from allauth.account.forms import SignupForm
 
 
-class CustomUserCreationForm(UserCreationForm):
+class UserCreationForm(UserCreationForm):
     class Meta:
         model = get_user_model()
         fields = ['email', 'username']
 
 
-class CustomUserChangeForm(UserChangeForm):
+class UserChangeForm(UserChangeForm):
     class Meta:
         model = get_user_model()
         fields = ['email', 'username']
+
 
 class SignUpForm(SignupForm):
-
     first_name = forms.CharField(
         max_length=64,
-        label='Name',
-        widget=forms.TextInput(attrs={'placeholder': 'Name'}))
+        label='First name',
+        widget=forms.TextInput(attrs={'placeholder': 'Name'})
+    )
     last_name = forms.CharField(
         max_length=64,
         label='Surname',
-        widget=forms.TextInput(attrs={'placeholder': 'Surname'}))
+        widget=forms.TextInput(attrs={'placeholder': 'Surname'})
+    )
+    username = forms.CharField(
+        max_length=150,
+        label='Username',
+        widget=forms.TextInput(attrs={'placeholder': 'Username'})
+    )
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields.pop('username')
+    def signup(self, request, user):
+        user.username = self.cleaned_data['username']
+        user.first_name = self.cleaned_data['first_name']
+        user.last_name = self.cleaned_data['last_name']
+        user.save()
 
+    def save(self, request):
+        user = super(SignUpForm, self).save(request)
+        return user
+    
 
 class ResetPasswordForm(forms.Form):
     old_password = forms.CharField(widget=forms.PasswordInput)

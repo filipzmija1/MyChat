@@ -3,7 +3,7 @@ from django.contrib.auth.models import AbstractUser
 
 import uuid
 
-class CustomUser(AbstractUser):
+class User(AbstractUser):
     friends = models.ManyToManyField('self', blank=True, symmetrical=False)
     username = models.SlugField(unique=True, max_length=150)
 
@@ -17,8 +17,8 @@ class Room(models.Model):
     )
     name = models.CharField(max_length=155, unique=True)
     description = models.TextField()
-    users = models.ManyToManyField(CustomUser, blank=True)
-    creator = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='creator')
+    users = models.ManyToManyField(User, blank=True)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator')
     is_private = models.BooleanField(default=False)
 
     def __str__(self):
@@ -27,7 +27,7 @@ class Room(models.Model):
 
 class Message(models.Model):
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    author = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
     date_edited = models.DateTimeField(null=True)
