@@ -42,5 +42,5 @@ class SearchForm(forms.Form):
         ('room', 'room'),
         ('user', 'user'),
     )
-    search = forms.CharField(min_length=3, required=False)
+    search = forms.CharField(min_length=1, required=False)
     search_by = forms.ChoiceField(choices=CHOICES)

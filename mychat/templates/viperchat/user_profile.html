@@ -11,13 +11,15 @@
 {% endif %}
 {% if request.user == user %}
 <a href="{% url 'edit_profile' user.username %}">Edit profile</a><br>
+{% else %}
+<a href="{% url 'add_friend' user.username %}">Add friend</a><br>
 {% endif %}
 Username: {{ user.username }} <br>
 Email: {{ user.email }}<br>
 First name: {{ user.first_name }}<br>
 Surname: {{ user.last_name }}<br>
-Friends: {% for friend in user.friends_set.all %}
-            {{ friend.username }}<br>
+Friends: <br>{% for friend in user.friends.all %}
+            <a href="{% url 'user_detail' friend.username %}">{{ friend.username }}</a><br>
         {% endfor %}
 
 
