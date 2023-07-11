@@ -5,8 +5,10 @@
 {% block content %}
 <h1>Edit profile</h1>
 <form action="" method="POST">
+    {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Edit profile">
 </form>
+
 <a href="{% url 'change_password' user.username %}">Change password</a>
 {% endblock %}

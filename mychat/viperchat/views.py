@@ -14,12 +14,14 @@ from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
+from django.contrib import messages
 
 from .models import Room
 from .forms import ResetPasswordForm, SearchForm
 
 
 User = get_user_model()
+
 
 class HomePage(View):
     """Start page view with links"""
@@ -46,6 +48,7 @@ class CreateRoom(LoginRequiredMixin, CreateView):
     def get_success_url(self):
         return f'/rooms/{self.object.pk}'
         
+
 class RoomList(ListView):
     """Shows every room"""
     model = Room
@@ -85,6 +88,9 @@ class UserProfileEdit(LoginRequiredMixin, UpdateView):
             raise PermissionDenied
         return user
     
+    def get_success_url(self):
+        return reverse('user_detail', kwargs={'username': self.request.user.username})
+    
 
 class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):
     """This view is destined to change user password (you can do this by enter your old password)"""
@@ -116,7 +122,7 @@ class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):
                     return self.form_invalid(form)
                 user.set_password(new_password)
                 user.save()
-                return redirect(reverse('user_detail', kwargs={'username': user.username}))
+                return redirect(reverse('account_logout'))
             else:
                 form.add_error('confirm_password', 'New password and confirm password do not match')
                 return self.form_invalid(form)
@@ -131,8 +137,8 @@ class AddFriend(LoginRequiredMixin, View):
         user_username = self.kwargs['username']
         user = User.objects.get(username=user_username)
         logged_user = self.request.user
-        if logged_user.friends.filter(username=user.username).exists():
-            raise PermissionDenied("You are already friends with this user.")
+        if logged_user.friends.filter(username=user.username).exists() or logged_user == user:
+            raise PermissionDenied
         else:
             logged_user.friends.add(user)
             logged_user.save()
@@ -160,3 +166,13 @@ class SearchUserOrRoom(FormView):
         return render(self.request, 'viperchat/search_form.html', self.get_context_data(form=form, search_result=search_result))
     
 
+class DeleteFriend(LoginRequiredMixin, View):
+    """View destined to delete friend from friendlist"""
+    def get(self, request, *args, **kwargs):
+        user_username = self.kwargs['username']
+        user = User.objects.get(username=user_username)
+        logged_user = self.request.user
+        if not logged_user.friends.filter(username=user.username).exists():
+            raise PermissionDenied
+        else:
+            pass
