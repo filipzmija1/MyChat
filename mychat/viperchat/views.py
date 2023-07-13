@@ -170,9 +170,10 @@ class DeleteFriend(LoginRequiredMixin, View):
     """View destined to delete friend from friendlist"""
     def get(self, request, *args, **kwargs):
         user_username = self.kwargs['username']
-        user = User.objects.get(username=user_username)
+        user_to_remove = User.objects.get(username=user_username)
         logged_user = self.request.user
-        if not logged_user.friends.filter(username=user.username).exists():
+        if not logged_user.friends.filter(username=user_to_remove.username).exists():
             raise PermissionDenied
         else:
-            pass
+            logged_user.friends.remove(user_to_remove)
+            return redirect(reverse('user_detail', kwargs={'username': logged_user.username}))

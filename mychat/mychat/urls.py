@@ -30,5 +30,6 @@ urlpatterns = [
     path('change-passsword/<slug:username>', vchat.ChangePassword.as_view(), name='change_password'),
     path('search/', vchat.SearchUserOrRoom.as_view(), name='search'),
     path('add-friend/<slug:username>', vchat.AddFriend.as_view(), name='add_friend'),
+    path('delete-friend/<slug:username>', vchat.DeleteFriend.as_view(), name='delete_friend'),
 
 ]
