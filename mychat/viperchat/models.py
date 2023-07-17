@@ -32,3 +32,14 @@ class Message(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     date_edited = models.DateTimeField(null=True)
     
+
+class Notification(models.Model):
+    id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        primary_key=True,
+        editable=False
+    )
+    desription = models.TextField()
+    date_created = models.DateTimeField(auto_now_add=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
