@@ -1,0 +1,13 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %} Confirm {% endblock %}
+
+{% block content %}
+<h2>Friend request</h2>
+<form action="" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    Are you sure you want to add {{ user.username }} to friendlist?
+    <input type="submit" value="Add friend">
+</form>
+{% endblock %}

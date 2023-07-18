@@ -13,7 +13,7 @@
 <a href="{% url 'edit_profile' user.username %}">Edit profile</a><br>
 <a href="{% url 'notification_list' user.username %}">Notifications</a><br>
 {% else %}
-<a href="{% url 'add_friend' user.username %}">Add friend</a><br>
+<a href="{% url 'friend_notification' user.username %}">Add friend</a><br>
 {% endif %}
 Username: {{ user.username }} <br>
 Email: {{ user.email }}<br>

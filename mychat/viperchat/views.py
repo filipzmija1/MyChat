@@ -5,7 +5,7 @@ from django.forms.models import BaseModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
-from django.views.generic.edit import CreateView, UpdateView, FormView, BaseCreateView
+from django.views.generic.edit import CreateView, UpdateView, FormView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.contrib.auth import get_user_model
@@ -179,9 +179,10 @@ class DeleteFriend(LoginRequiredMixin, View):
             return redirect(reverse('user_detail', kwargs={'username': logged_user.username}))
         
         
-class FriendNotifiaction(LoginRequiredMixin, BaseCreateView):
+class FriendNotifiaction(LoginRequiredMixin, CreateView):
     """Concerns only friend request notifcations"""
     model = Notification
+    fields = []
 
     def get_object(self):
         user_username = self.kwargs['username']
@@ -192,21 +193,20 @@ class FriendNotifiaction(LoginRequiredMixin, BaseCreateView):
         else:
             return user
 
-    def get_initial(self):
-        initial = super().get_initial()
-        initial['sender'] = self.request.user
-        initial['receiver'] = self.get_object()
-        initial['type'] = 'friend_request'
-        initial['description'] = f"{self.request.user.username} wants to join to your friendlist"
-        return initial
-    
     def form_valid(self, form):
-        self.object = form.save()
+        form.instance.sender = self.request.user
+        form.instance.receiver = self.get_object()
+        form.instance.type = 'friend_request'
+        form.instance.description = f"{self.request.user.username} wants to join your friendlist"
         return super().form_valid(form)
 
     def get_success_url(self):
-        return reverse('user_detail', kwargs={'username': self.request.user.username})
-
+        return reverse('user_detail', kwargs={'username': self.get_object().username})
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.get_object()
+        return context
 
 class NotificationList(LoginRequiredMixin, ListView):
     """Show user's notifications"""
