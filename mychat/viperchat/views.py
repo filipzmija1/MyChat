@@ -76,7 +76,9 @@ class UserProfile(DetailView):
         """friend request display add friend or cancel friend request"""
         context = super().get_context_data(**kwargs)
         friend_request = FriendRequest.objects.filter(sender=self.request.user, receiver=self.get_object())
+        friend_request_mirror = FriendRequest.objects.filter(sender=self.get_object(), receiver=self.request.user)
         context['friend_request'] = friend_request
+        context['friend_request_mirror'] = friend_request_mirror
         return context
     
 
@@ -204,7 +206,7 @@ class FriendNotifiaction(LoginRequiredMixin, CreateView):
         sender = self.request.user
         receiver = self.get_object()
         description = f"{self.request.user.username} wants to join your friendlist"
-        
+
         if FriendRequest.objects.filter(sender=sender, receiver=receiver).exists() \
         or FriendRequest.objects.filter(sender=receiver, receiver=sender).exists()\
         or receiver in sender.friends.all():

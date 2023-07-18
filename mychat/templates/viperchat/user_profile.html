@@ -18,11 +18,13 @@
     {% for request in friend_request %}
     {% if request.status == 'waiting' %}
         <a href="">Cancel friend request</a><br>
-    {% elif request.status == 'canceled' %}
-        <a href="{% url 'friend_notification' user.username %}">Add friend</a><br>
-    {% else %}
-        <a href="">Already friends</a><br>
     {% endif %}
+    {% endfor %}
+{% elif request.user in user.friends.all %}
+    <a href="">Already friends</a><br>
+{% elif friend_request_mirror.exists %}
+    {% for request in friend_request_mirror%}
+    <a href="{% url 'friend_request_detail' request.pk %}">User sent you invitation</a><br>
     {% endfor %}
 {% else %}
     <a href="{% url 'friend_notification' user.username %}">Add friend</a><br>
