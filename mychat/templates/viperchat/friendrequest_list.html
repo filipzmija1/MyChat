@@ -3,7 +3,8 @@
 {% block title %} Friend Requests {% endblock %}
 
 {% block content %}
+<h2>Friend invitations</h2>
 {% for request in friend_requests %}
-{{ request.description }} - {{ request.date_created }}<br>
+{{ request.description }} - <a href="{% url 'friend_request_detail' request.id %}">details</a>
 {% endfor %}
 {% endblock %}

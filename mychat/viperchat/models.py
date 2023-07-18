@@ -4,7 +4,7 @@ from django.contrib.auth.models import AbstractUser
 import uuid
 
 class User(AbstractUser):
-    friends = models.ManyToManyField('self', blank=True, symmetrical=False)
+    friends = models.ManyToManyField('self', blank=True)
     username = models.SlugField(unique=True, max_length=150)
 
 

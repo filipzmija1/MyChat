@@ -204,13 +204,13 @@ class FriendNotifiaction(LoginRequiredMixin, CreateView):
         sender = self.request.user
         receiver = self.get_object()
         description = f"{self.request.user.username} wants to join your friendlist"
-        if FriendRequest.objects.filter(sender=sender, receiver=receiver).exists():
+        
+        if FriendRequest.objects.filter(sender=sender, receiver=receiver).exists() \
+        or FriendRequest.objects.filter(sender=receiver, receiver=sender).exists()\
+        or receiver in sender.friends.all():
             raise PermissionDenied
         else:
-            FriendRequest.objects.create(
-                sender=sender, 
-                receiver=receiver, 
-                description=description)
+            FriendRequest.objects.create(sender=sender, receiver=receiver, description=description)
             return redirect(self.get_success_url())
 
     def get_success_url(self):
@@ -254,3 +254,30 @@ class FriendRequestList(LoginRequiredMixin, ListView):
         else:
             context['friend_requests'] = friend_requests
             return context
+        
+
+class FriendRequestUpdate(LoginRequiredMixin, UpdateView):
+    """See friend request details and changes request status plus adding to friends or decline"""
+    model = FriendRequest
+    context_object_name = 'friend_request'
+    fields = []
+    template_name = 'viperchat/friendrequest_detail.html'
+
+    def get_object(self, queryset=None):
+        request_id = self.kwargs['pk']
+        friend_request = FriendRequest.objects.get(pk=request_id)
+        if self.request.user != friend_request.receiver:
+            raise PermissionDenied
+        else:
+            return friend_request
+        
+    def form_valid(self, form):
+        friend_request = form.instance
+        if 'accept_button' in self.request.POST:
+            friend_request.status = 'accepted'
+            self.request.user.friends.add(friend_request.sender)
+        elif 'decline_button' in self.request.POST:
+            friend_request.status = 'canceled'
+        form.save()
+        friend_request.delete()
+        return redirect('user_detail', username=self.request.user.username)
