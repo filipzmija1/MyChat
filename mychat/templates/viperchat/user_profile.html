@@ -17,7 +17,7 @@
 {% if friend_request.exists %}
     {% for request in friend_request %}
     {% if request.status == 'waiting' %}
-        <a href="">Cancel friend request</a><br>
+        <a href="{% url 'friend_request_delete' request.pk %}">Cancel friend request</a><br>
     {% endif %}
     {% endfor %}
 {% elif request.user in user.friends.all %}

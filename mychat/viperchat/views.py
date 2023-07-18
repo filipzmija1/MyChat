@@ -5,7 +5,7 @@ from django.forms.models import BaseModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
-from django.views.generic.edit import CreateView, UpdateView, FormView
+from django.views.generic.edit import CreateView, UpdateView, FormView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import ListView, DetailView
 from django.contrib.auth import get_user_model
@@ -208,7 +208,7 @@ class FriendNotifiaction(LoginRequiredMixin, CreateView):
         description = f"{self.request.user.username} wants to join your friendlist"
 
         if FriendRequest.objects.filter(sender=sender, receiver=receiver).exists() \
-        or FriendRequest.objects.filter(sender=receiver, receiver=sender).exists()\
+        or FriendRequest.objects.filter(sender=receiver, receiver=sender).exists() \
         or receiver in sender.friends.all():
             raise PermissionDenied
         else:
@@ -259,7 +259,7 @@ class FriendRequestList(LoginRequiredMixin, ListView):
         
 
 class FriendRequestUpdate(LoginRequiredMixin, UpdateView):
-    """See friend request details and changes request status plus adding to friends or decline"""
+    """See friend request details and changes request status plus adding to friends or decline."""
     model = FriendRequest
     context_object_name = 'friend_request'
     fields = []
@@ -283,3 +283,22 @@ class FriendRequestUpdate(LoginRequiredMixin, UpdateView):
         form.save()
         friend_request.delete()
         return redirect('user_detail', username=self.request.user.username)
+    
+
+class FriendRequestDelete(LoginRequiredMixin, DeleteView):
+    """Delete friend invitation"""
+    model = FriendRequest
+
+    def get_object(self):
+        logged_user = self.request.user
+        friend_request_id = self.kwargs['pk']
+        friend_request = FriendRequest.objects.get(pk=friend_request_id)
+        if logged_user != friend_request.sender:
+            raise PermissionDenied
+        else:
+            return friend_request
+        
+    def get(self, request, *args, **kwargs):
+        receiver = self.get_object().receiver
+        self.get_object().delete()
+        return redirect('user_detail', username=receiver.username)
