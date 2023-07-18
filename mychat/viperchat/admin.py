@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Room
+from .models import Room, Notification
 from .forms import UserCreationForm, UserChangeForm
 
 
@@ -21,3 +21,4 @@ class UserAdmin(UserAdmin):
 
 admin.site.register(User, UserAdmin)
 admin.site.register(Room)
+admin.site.register(Notification)

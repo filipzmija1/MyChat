@@ -34,12 +34,19 @@ class Message(models.Model):
     
 
 class Notification(models.Model):
+    CHOICES = (
+        ('friend_request', 'friend_request'),
+        ('other', 'other'),
+    )
     id = models.UUIDField(
         default=uuid.uuid4,
         unique=True,
         primary_key=True,
         editable=False
     )
-    desription = models.TextField()
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender', blank=True, null=True) 
+    description = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='receiver')
+    is_read = models.BooleanField(default=False)
+    type = models.CharField(choices=CHOICES, default='other', max_length=64)
