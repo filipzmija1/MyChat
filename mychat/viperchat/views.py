@@ -16,7 +16,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
 from django.contrib import messages
 
-from .models import Room, Notification
+from .models import Room, Notification, FriendRequest
 from .forms import ResetPasswordForm, SearchForm
 
 
@@ -71,6 +71,13 @@ class UserProfile(DetailView):
         username = self.kwargs['username']
         user = User.objects.get(username=username)
         return user
+    
+    def get_context_data(self, **kwargs):
+        """friend request display add friend or cancel friend request"""
+        context = super().get_context_data(**kwargs)
+        friend_request = FriendRequest.objects.filter(sender=self.request.user, receiver=self.get_object())
+        context['friend_request'] = friend_request
+        return context
     
 
 class UserProfileEdit(LoginRequiredMixin, UpdateView):
@@ -181,7 +188,7 @@ class DeleteFriend(LoginRequiredMixin, View):
         
 class FriendNotifiaction(LoginRequiredMixin, CreateView):
     """Concerns only friend request notifcations"""
-    model = Notification
+    model = FriendRequest
     fields = []
 
     def get_object(self):
@@ -192,13 +199,19 @@ class FriendNotifiaction(LoginRequiredMixin, CreateView):
             raise PermissionDenied
         else:
             return user
-
-    def form_valid(self, form):
-        form.instance.sender = self.request.user
-        form.instance.receiver = self.get_object()
-        form.instance.type = 'friend_request'
-        form.instance.description = f"{self.request.user.username} wants to join your friendlist"
-        return super().form_valid(form)
+        
+    def get(self, request, *args, **kwargs):
+        sender = self.request.user
+        receiver = self.get_object()
+        description = f"{self.request.user.username} wants to join your friendlist"
+        if FriendRequest.objects.filter(sender=sender, receiver=receiver).exists():
+            raise PermissionDenied
+        else:
+            FriendRequest.objects.create(
+                sender=sender, 
+                receiver=receiver, 
+                description=description)
+            return redirect(self.get_success_url())
 
     def get_success_url(self):
         return reverse('user_detail', kwargs={'username': self.get_object().username})
@@ -207,6 +220,7 @@ class FriendNotifiaction(LoginRequiredMixin, CreateView):
         context = super().get_context_data(**kwargs)
         context['user'] = self.get_object()
         return context
+
 
 class NotificationList(LoginRequiredMixin, ListView):
     """Show user's notifications"""
@@ -222,4 +236,21 @@ class NotificationList(LoginRequiredMixin, ListView):
             raise PermissionDenied
         else:
             context['notifications'] = notifications
+            return context
+        
+
+class FriendRequestList(LoginRequiredMixin, ListView):
+    """Show user's friend requests"""
+    model = FriendRequest
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_username = self.kwargs['username']      # Get user's username from the URL
+        user = User.objects.get(username=user_username)
+        logged_user = self.request.user
+        friend_requests = FriendRequest.objects.filter(receiver=user).order_by('-date_created')
+        if user != logged_user:
+            raise PermissionDenied
+        else:
+            context['friend_requests'] = friend_requests
             return context

@@ -34,9 +34,23 @@ class Message(models.Model):
     
 
 class Notification(models.Model):
+    id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        primary_key=True,
+        editable=False
+    )
+    description = models.TextField()
+    date_created = models.DateTimeField(auto_now_add=True)
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE)
+    is_read = models.BooleanField(default=False)
+
+
+class FriendRequest(models.Model):
     CHOICES = (
-        ('friend_request', 'friend_request'),
-        ('other', 'other'),
+        ('accepted', 'accepted'),
+        ('canceled', 'canceled'),
+        ('waiting', 'waiting'),
     )
     id = models.UUIDField(
         default=uuid.uuid4,
@@ -44,9 +58,8 @@ class Notification(models.Model):
         primary_key=True,
         editable=False
     )
-    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender', blank=True, null=True) 
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sender', blank=True, null=True)
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='receiver')
     description = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
-    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='receiver')
-    is_read = models.BooleanField(default=False)
-    type = models.CharField(choices=CHOICES, default='other', max_length=64)
+    status = models.CharField(choices=CHOICES, max_length=64, default='waiting')

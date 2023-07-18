@@ -12,8 +12,21 @@
 {% if request.user == user %}
 <a href="{% url 'edit_profile' user.username %}">Edit profile</a><br>
 <a href="{% url 'notification_list' user.username %}">Notifications</a><br>
+<a href="{% url 'friend_request_list' user.username %}">Friend requests</a><br>
 {% else %}
-<a href="{% url 'friend_notification' user.username %}">Add friend</a><br>
+{% if friend_request.exists %}
+    {% for request in friend_request %}
+    {% if request.status == 'waiting' %}
+        <a href="">Cancel friend request</a><br>
+    {% elif request.status == 'canceled' %}
+        <a href="{% url 'friend_notification' user.username %}">Add friend</a><br>
+    {% else %}
+        <a href="">Already friends</a><br>
+    {% endif %}
+    {% endfor %}
+{% else %}
+    <a href="{% url 'friend_notification' user.username %}">Add friend</a><br>
+{% endif %}
 {% endif %}
 Username: {{ user.username }} <br>
 Email: {{ user.email }}<br>

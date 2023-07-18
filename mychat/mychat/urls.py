@@ -33,5 +33,6 @@ urlpatterns = [
     path('delete-friend/<slug:username>', vchat.DeleteFriend.as_view(), name='delete_friend'),
     path('friend-request/<slug:username>', vchat.FriendNotifiaction.as_view(), name='friend_notification'),
     path('user/<slug:username>/notifications', vchat.NotificationList.as_view(), name='notification_list'),
-
+    path('user/<slug:username>/friend-requests', vchat.FriendRequestList.as_view(), name='friend_request_list'),
+    
 ]

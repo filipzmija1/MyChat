@@ -1,0 +1,9 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %} Friend Requests {% endblock %}
+
+{% block content %}
+{% for request in friend_requests %}
+{{ request.description }} - {{ request.date_created }}<br>
+{% endfor %}
+{% endblock %}
