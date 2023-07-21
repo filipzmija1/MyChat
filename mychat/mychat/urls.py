@@ -29,12 +29,11 @@ urlpatterns = [
     path('edit-user/<slug:username>', vchat.UserProfileEdit.as_view(), name='edit_profile'),
     path('change-passsword/<slug:username>', vchat.ChangePassword.as_view(), name='change_password'),
     path('search/', vchat.SearchUserOrRoom.as_view(), name='search'),
-    path('add-friend/<slug:username>', vchat.AddFriend.as_view(), name='add_friend'),
     path('delete-friend/<slug:username>', vchat.DeleteFriend.as_view(), name='delete_friend'),
     path('friend-request/<slug:username>', vchat.FriendNotifiaction.as_view(), name='friend_notification'),
     path('user/<slug:username>/notifications', vchat.NotificationList.as_view(), name='notification_list'),
     path('user/<slug:username>/friend-requests', vchat.FriendRequestList.as_view(), name='friend_request_list'),
     path('friend-requests/<uuid:pk>', vchat.FriendRequestUpdate.as_view(), name='friend_request_detail'),
     path('request-delete/<uuid:pk>', vchat.FriendRequestDelete.as_view(), name='friend_request_delete'),
-    
+
 ]

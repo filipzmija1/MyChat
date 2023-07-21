@@ -10,8 +10,8 @@
     {% endfor %}
 {% endif %}
 {% if request.user == user %}
-<a href="{% url 'edit_profile' user.username %}">Edit profile</a><br>
-<a href="{% url 'notification_list' user.username %}">Notifications</a><br>
+<a href="{% url 'edit_profile' user.username %}">Edit profile</a> |
+<a href="{% url 'notification_list' user.username %}">Notifications</a> |
 <a href="{% url 'friend_request_list' user.username %}">Friend requests</a><br>
 {% else %}
 {% if friend_request.exists %}
@@ -21,7 +21,7 @@
     {% endif %}
     {% endfor %}
 {% elif request.user in user.friends.all %}
-    <a href="">Already friends</a><br>
+<span style="color : green">Already friends</span> | <a href="{% url 'delete_friend' user.username %}">Delete from friendlist</a><br>
 {% elif friend_request_mirror.exists %}
     {% for request in friend_request_mirror%}
     <a href="{% url 'friend_request_detail' request.pk %}">User sent you invitation</a><br>
@@ -35,7 +35,8 @@ Email: {{ user.email }}<br>
 First name: {{ user.first_name }}<br>
 Surname: {{ user.last_name }}<br>
 Friends: <br>{% for friend in user.friends.all %}
-            <a href="{% url 'user_detail' friend.username %}">{{ friend.username }} |  <a href="{% url 'delete_friend' friend.username%}">Delete friend</a></a><br>
+            <a href="{% url 'user_detail' friend.username %}">{{ friend.username }} {% if request.user == user %}| 
+                 <a href="{% url 'delete_friend' friend.username %}">Delete friend</a></a>{% endif %}<br>
         {% endfor %}
 
 

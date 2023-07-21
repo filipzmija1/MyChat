@@ -140,20 +140,6 @@ class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):
             return self.form_invalid(form)
 
 
-class AddFriend(LoginRequiredMixin, View):
-    """View destined to add friends"""
-    def get(self, request, *args, **kwargs):
-        user_username = self.kwargs['username']
-        user = User.objects.get(username=user_username)
-        logged_user = self.request.user
-        if logged_user.friends.filter(username=user.username).exists() or logged_user == user:
-            raise PermissionDenied
-        else:
-            logged_user.friends.add(user)
-            logged_user.save()
-            return redirect(reverse('user_detail', kwargs={'username': logged_user.username}))
-
-
 class SearchUserOrRoom(FormView):
     """This view is destined to search users and/or rooms"""
     form_class = SearchForm
