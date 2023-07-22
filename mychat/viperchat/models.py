@@ -65,7 +65,7 @@ class FriendRequest(models.Model):
     status = models.CharField(choices=CHOICES, max_length=64, default='waiting')
 
 
-class PrivacyRoomNotification(models.Model):
+class PrivateRoomJoinNotification(models.Model):
     id = models.UUIDField(
     default=uuid.uuid4,
     unique=True,

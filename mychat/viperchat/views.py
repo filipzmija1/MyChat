@@ -17,7 +17,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
 from django.contrib import messages
 
-from .models import Room, Notification, FriendRequest, PrivacyRoomNotification
+from .models import Room, Notification, FriendRequest, PrivateRoomJoinNotification
 from .forms import ResetPasswordForm, SearchForm
 
 
@@ -324,7 +324,9 @@ class FriendRequestDelete(LoginRequiredMixin, DeleteView):
         return redirect('user_detail', username=receiver.username)
     
 
-class JoinPrivacyRoomNotification(LoginRequiredMixin, CreateView):
+class PrivateRoomInvite(LoginRequiredMixin, CreateView):
     """Send notification to room creator for join the room"""
-    model = PrivacyRoomNotification
-    pass
+    model = PrivateRoomJoinNotification
+    
+    def get_queryset(self) -> QuerySet[Any]:
+        return super().get_queryset()
