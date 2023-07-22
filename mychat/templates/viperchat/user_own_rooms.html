@@ -1,0 +1,10 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %} Your rooms {% endblock %}
+
+{% block content %}
+<h2>Your rooms</h2>
+{% for room in user_rooms %}
+<a href="{% url 'room_detail' room.pk %}">{{ room.name }}</a><br>
+{% endfor %}
+{% endblock %}

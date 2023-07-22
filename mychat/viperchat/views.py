@@ -1,6 +1,7 @@
 from typing import Any, Dict, Optional
 from django.db import models
 from django.db.models import Q
+from django.db.models.query import QuerySet
 from django.forms.models import BaseModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
@@ -16,7 +17,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
 from django.contrib import messages
 
-from .models import Room, Notification, FriendRequest
+from .models import Room, Notification, FriendRequest, PrivacyRoomNotification
 from .forms import ResetPasswordForm, SearchForm
 
 
@@ -53,13 +54,43 @@ class RoomList(ListView):
     """Shows every room"""
     model = Room
     paginate_by = 20
+
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        public_rooms = Room.objects.filter(is_private=False)
+        context['room_list'] = public_rooms
+        return context
     
 
 class RoomDetails(DetailView):
     """Shows room details"""
     model = Room
     context_object_name = 'room'
-    
+
+    def get_object(self, *args, **kwargs):
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(id=room_id)
+        logged_user = self.request.user
+        if room.is_private == True and logged_user in room.users.all():
+            return room
+        elif room.is_private == True and logged_user not in room.users.all():
+            raise PermissionDenied
+        else:
+            return room
+        
+
+
+class UserOwnRooms(LoginRequiredMixin, ListView):
+    """Display user own rooms"""
+    model = Room
+    context_object_name = "user_rooms"
+    template_name = 'viperchat/user_own_rooms.html'
+
+    def get_queryset(self):
+        logged_user = self.request.user
+        rooms = Room.objects.filter(users=logged_user)
+        return rooms
+
 
 class UserProfile(DetailView):
     """Shows user profile"""
@@ -77,8 +108,10 @@ class UserProfile(DetailView):
         context = super().get_context_data(**kwargs)
         friend_request = FriendRequest.objects.filter(sender=self.request.user, receiver=self.get_object())
         friend_request_mirror = FriendRequest.objects.filter(sender=self.get_object(), receiver=self.request.user)
+        user_rooms = Room.objects.filter(creator=self.request.user)
         context['friend_request'] = friend_request
         context['friend_request_mirror'] = friend_request_mirror
+        context['user_rooms'] = user_rooms
         return context
     
 
@@ -153,7 +186,8 @@ class SearchUserOrRoom(FormView):
             if search_by == 'room':
                 search_result = Room.objects.filter(
                     Q(name__icontains=search_value) | 
-                    Q(name__startswith=search_value))
+                    Q(name__startswith=search_value),
+                    is_private=False)
             if search_by == 'user':
                 search_result = User.objects.filter(
                     Q(username__icontains=search_value) | 
@@ -288,3 +322,9 @@ class FriendRequestDelete(LoginRequiredMixin, DeleteView):
         receiver = self.get_object().receiver
         self.get_object().delete()
         return redirect('user_detail', username=receiver.username)
+    
+
+class JoinPrivacyRoomNotification(LoginRequiredMixin, CreateView):
+    """Send notification to room creator for join the room"""
+    model = PrivacyRoomNotification
+    pass

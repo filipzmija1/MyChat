@@ -63,3 +63,15 @@ class FriendRequest(models.Model):
     description = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
     status = models.CharField(choices=CHOICES, max_length=64, default='waiting')
+
+
+class PrivacyRoomNotification(models.Model):
+    id = models.UUIDField(
+    default=uuid.uuid4,
+    unique=True,
+    primary_key=True,
+    editable=False
+)
+    join_request_sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='join_request_sender', blank=True, null=True)
+    room_creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='room_creator')
+    accepted = models.BooleanField(default=False)
