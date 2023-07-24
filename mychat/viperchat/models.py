@@ -65,13 +65,14 @@ class FriendRequest(models.Model):
     status = models.CharField(choices=CHOICES, max_length=64, default='waiting')
 
 
-class PrivateRoomJoinNotification(models.Model):
+class RoomInvite(models.Model):
     id = models.UUIDField(
     default=uuid.uuid4,
     unique=True,
     primary_key=True,
     editable=False
 )
-    join_request_sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='join_request_sender', blank=True, null=True)
+    room = models.ForeignKey(Room, on_delete=models.CASCADE)
+    invited_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invited_user')
     room_creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='room_creator')
     accepted = models.BooleanField(default=False)

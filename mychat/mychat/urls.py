@@ -36,5 +36,6 @@ urlpatterns = [
     path('friend-requests/<uuid:pk>', vchat.FriendRequestUpdate.as_view(), name='friend_request_detail'),
     path('request-delete/<uuid:pk>', vchat.FriendRequestDelete.as_view(), name='friend_request_delete'),
     path('user/<slug:username>/your-rooms', vchat.UserOwnRooms.as_view(), name='logged_user_rooms'),
+    path('private-room/invite/<uuid:pk>', vchat.PrivateRoomInvite.as_view(), name='private_room_invite'),
     
 ]

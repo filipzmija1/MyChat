@@ -17,7 +17,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
 from django.contrib import messages
 
-from .models import Room, Notification, FriendRequest, PrivateRoomJoinNotification
+from .models import Room, Notification, FriendRequest, RoomInvite
 from .forms import ResetPasswordForm, SearchForm
 
 
@@ -47,7 +47,7 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
     
     def get_success_url(self):
-        return f'/rooms/{self.object.pk}'
+        return reverse('room_detail', kwargs={'pk': self.object.pk})
         
 
 class RoomList(ListView):
@@ -77,6 +77,14 @@ class RoomDetails(DetailView):
             raise PermissionDenied
         else:
             return room
+        
+    
+    def get_context_data(self,  *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        logged_user = self.request.user
+        logged_user_friends = logged_user.friends.all()
+        context['friends'] = logged_user_friends
+        return context
         
 
 
@@ -325,8 +333,21 @@ class FriendRequestDelete(LoginRequiredMixin, DeleteView):
     
 
 class PrivateRoomInvite(LoginRequiredMixin, CreateView):
-    """Send notification to room creator for join the room"""
-    model = PrivateRoomJoinNotification
+    """Send notification to private room creator's friends for join the room"""
+    model = RoomInvite
     
-    def get_queryset(self) -> QuerySet[Any]:
-        return super().get_queryset()
+    def get_object(self, request, *args, **kwargs):
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(id=room_id)
+        if room.creator != self.request.user:
+            raise PermissionDenied
+        else:
+            return Room
+    
+    
+    def get_context_data(self,  *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        logged_user = self.request.user
+        logged_user_friends = logged_user.friends.all()
+        context['friends'] = logged_user_friends
+        return context
