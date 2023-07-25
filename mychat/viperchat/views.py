@@ -344,10 +344,3 @@ class PrivateRoomInvite(LoginRequiredMixin, CreateView):
         else:
             return Room
     
-    
-    def get_context_data(self,  *args, **kwargs):
-        context = super().get_context_data(**kwargs)
-        logged_user = self.request.user
-        logged_user_friends = logged_user.friends.all()
-        context['friends'] = logged_user_friends
-        return context
