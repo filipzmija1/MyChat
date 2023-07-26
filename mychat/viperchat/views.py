@@ -332,15 +332,16 @@ class FriendRequestDelete(LoginRequiredMixin, DeleteView):
         return redirect('user_detail', username=receiver.username)
     
 
-class PrivateRoomInvite(LoginRequiredMixin, CreateView):
+class RoomInvite(LoginRequiredMixin, CreateView):
     """Send notification to private room creator's friends for join the room"""
     model = RoomInvite
     
     def get_object(self, request, *args, **kwargs):
         room_id = self.kwargs['pk']
         room = Room.objects.get(id=room_id)
-        if room.creator != self.request.user:
-            raise PermissionDenied
-        else:
-            return Room
-    
+        return room
+
+    def get(self, *args, **kwargs):
+        logged_user = self.request.user
+        room = self.get_object()
+        pass
