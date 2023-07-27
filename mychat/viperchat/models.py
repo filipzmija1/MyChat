@@ -86,5 +86,9 @@ class RoomInvite(models.Model):
 )
     room = models.ForeignKey(Room, on_delete=models.CASCADE)
     invited_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invited_user')
-    room_creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='room_creator')
+    invitation_sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitation_sender')
     accepted = models.BooleanField(default=False)
+    class Meta:
+        permissions = [
+            ("send_invitation", "Can send invitations to private room"),
+        ]

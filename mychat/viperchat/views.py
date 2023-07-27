@@ -14,13 +14,14 @@ from django.core.exceptions import PermissionDenied
 from django.contrib.auth.hashers import check_password
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.messages.views import SuccessMessageMixin
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
+from django.views.generic.detail import SingleObjectMixin
 
 from .models import Room, Notification, FriendRequest, RoomInvite, Message
-from .forms import ResetPasswordForm, SearchForm, RoomManagementForm
+from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm
 
 
 User = get_user_model()
@@ -38,7 +39,8 @@ class HomePage(View):
     
 
 class CreateRoom(LoginRequiredMixin, CreateView):
-    """Create room and groups with permissions"""
+    """Create room and groups with permissions. Creates 3 groups (Room Masters, Members and Moderators). 
+    By default all members can invite"""
     model = Room
     fields = ['name', 'description', 'is_private']
 
@@ -46,23 +48,33 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         form.instance.creator = self.request.user
         room = form.save()
         room.users.add(self.request.user)
-        mods_group, status = Group.objects.get_or_create(name=f'{room.name}_mods')  # Create room moderator group
-        mods_group.user_set.add(self.request.user)
+
+        moderators_group, status = Group.objects.get_or_create(name=f'{room.name}_mods')  # Create moderator group
+        members_group, created = Group.objects.get_or_create(name=f'{room.name}_members')    # Create members group
+        room_masters, is_created = Group.objects.get_or_create(name=f'{room.name}_masters')
+
+        moderators_group.user_set.add(self.request.user)      
+        members_group.user_set.add(self.request.user)
+        room_masters.user_set.add(self.request.user)
+
         message_content_type = ContentType.objects.get_for_model(Message)
-
-        delete_message_permission = Permission.objects.get(
-            codename='delete_message_from_room',
-            content_type=message_content_type,
-        )
-
-        mods_group.permissions.add(delete_message_permission)
         room_content_type = ContentType.objects.get_for_model(Room)
-        delete_user_permission = Permission.objects.get(
-            codename='delete_user_from_room',
-            content_type=room_content_type,
-        )
-        mods_group.permissions.add(delete_user_permission)
+        room_invite_content_type = ContentType.objects.get_for_model(RoomInvite)
 
+        delete_message_permission = Permission.objects.get(codename='delete_message_from_room', content_type=message_content_type)
+        delete_user_permission = Permission.objects.get(codename='delete_user_from_room', content_type=room_content_type)
+        invite_to_room_permission = Permission.objects.get(codename='send_invitation', content_type=room_invite_content_type)
+
+        moderators_group.permissions.add(delete_message_permission)
+        moderators_group.permissions.add(delete_user_permission)
+        moderators_group.permissions.add(invite_to_room_permission)
+
+        members_group.permissions.add(invite_to_room_permission)
+
+        room_masters.permissions.add(delete_message_permission)
+        room_masters.permissions.add(delete_user_permission)
+        room_masters.permissions.add(invite_to_room_permission)
+        
         return super().form_valid(form)
     
     def get_success_url(self):
@@ -78,11 +90,12 @@ class DeleteMessage(LoginRequiredMixin, DeleteView):
         message = Message.objects.get(id=message_id)
         room = message.room
         moderators_group = Group.objects.get(name=f'{room.name}_mods')
+        room_masters = Group.objects.get(name=f'{room.name}_masters')
         logged_user = self.request.user
-        delete_permission = Permission.objects.get(codename='delete_message_from_room')
-        if logged_user == message.author:
+        delete_message_permission = Permission.objects.get(codename='delete_message_from_room')
+        if logged_user in room_masters.user_set.all():     # Check if user belongs to room_masters group
             return message
-        elif delete_permission in moderators_group.permissions.all() and logged_user in moderators_group.user_set.all():    # Check if delete permission and logged user are in moderate group
+        elif delete_message_permission in moderators_group.permissions.all() and logged_user in moderators_group.user_set.all():    # Check if delete permission and logged user are in moderate group
             return message
         else:
             raise PermissionDenied
@@ -124,8 +137,8 @@ class JoinRoom(LoginRequiredMixin, UpdateView):
             raise PermissionDenied
     
 
-class RoomDetails(LoginRequiredMixin, DetailView):
-    """Shows room details"""
+class RoomDetail(LoginRequiredMixin, DetailView):
+    """Shows room details and gives posibility to write message in room"""
     model = Room
     context_object_name = 'room'
 
@@ -144,13 +157,51 @@ class RoomDetails(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         logged_user = self.request.user
         logged_user_friends = logged_user.friends.all()
-        moderators_group = Group.objects.get(name=f'{self.get_object().name}_mods')
+        room_masters = Group.objects.get(name=f'{self.get_object().name}_masters')
+        room_moderators = Group.objects.get(name=f'{self.get_object().name}_mods')
+        delete_message_permission = Permission.objects.get(codename='delete_message_from_room')
         context['friends'] = logged_user_friends
         context['messages'] = Message.objects.filter(room=self.get_object())
-        context['moderators'] = moderators_group.user_set.all() 
+        context['masters'] = room_masters.user_set.all()
+        context['form'] = SendMessageForm() 
+        if delete_message_permission in room_moderators.permissions.all(): # Check if moderators have permission to display delete message button
+            context['moderators'] = room_moderators.user_set.all()
         return context
-        
+    
 
+class SendMessage(LoginRequiredMixin, CreateView):
+    """Send message in DetailView template"""
+    model = Message
+    template_name = 'viperchat/room_detail.html'
+    form_class = SendMessageForm
+
+    def get_object(self):
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(id=room_id)
+        return room
+    
+    def get_success_url(self):
+        return reverse_lazy('room_detail', kwargs={'pk': self.get_object().pk})
+    
+    def post(self, request, *args, **kwargs):
+        form = SendMessageForm(request.POST)
+        if form.is_valid():
+            room = self.get_object()
+            author = self.request.user
+            Message.objects.create(room=room, author=author)
+            return redirect('room_detail', pk=room.pk) 
+        context = self.get_context_data(**kwargs)
+        context['form'] = form
+        return self.render_to_response(context)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        room_detail_context = RoomDetail().get_context_data(**kwargs)
+        context.update(room_detail_context)
+        return context
+    
+
+    
 class RoomManagement(LoginRequiredMixin, UpdateView):
     """Moderators delete messages, send invites, delete users in room"""
     model = Room
@@ -415,16 +466,16 @@ class FriendRequestDelete(LoginRequiredMixin, DeleteView):
         return redirect('user_detail', username=receiver.username)
     
 
-class RoomInvite(LoginRequiredMixin, CreateView):
-    """Send notification to private room creator's friends for join the room"""
-    model = RoomInvite
+# class RoomInvite(LoginRequiredMixin, CreateView):
+#     """Send notification to private room creator's friends for join the room"""
+#     model = RoomInvite
     
-    def get_object(self, request, *args, **kwargs):
-        room_id = self.kwargs['pk']
-        room = Room.objects.get(id=room_id)
-        return room
+#     def get_object(self, request, *args, **kwargs):
+#         room_id = self.kwargs['pk']
+#         room = Room.objects.get(id=room_id)
+#         return room
 
-    def get(self, *args, **kwargs):
-        logged_user = self.request.user
-        room = self.get_object()
-        pass
+#     def get(self, *args, **kwargs):
+#         logged_user = self.request.user
+#         room = self.get_object()
+#         pass

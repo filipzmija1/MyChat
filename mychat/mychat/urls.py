@@ -24,7 +24,7 @@ urlpatterns = [
     path('create-room/', vchat.CreateRoom.as_view(), name='create_room'),
     path('accounts/', include('allauth.urls')),
     path('rooms/', vchat.RoomList.as_view(), name='rooms'),
-    path('rooms/<uuid:pk>', vchat.RoomDetails.as_view(), name='room_detail'),
+    path('rooms/<uuid:pk>', vchat.RoomDetail.as_view(), name='room_detail'),
     path('user/<slug:username>', vchat.UserProfile.as_view(), name='user_detail'),
     path('edit-user/<slug:username>', vchat.UserProfileEdit.as_view(), name='edit_profile'),
     path('change-passsword/<slug:username>', vchat.ChangePassword.as_view(), name='change_password'),
@@ -36,9 +36,9 @@ urlpatterns = [
     path('friend-requests/<uuid:pk>', vchat.FriendRequestUpdate.as_view(), name='friend_request_detail'),
     path('request-delete/<uuid:pk>', vchat.FriendRequestDelete.as_view(), name='friend_request_delete'),
     path('user/<slug:username>/your-rooms', vchat.UserOwnRooms.as_view(), name='logged_user_rooms'),
-    path('private-room/invite/<uuid:pk>', vchat.RoomInvite.as_view(), name='room_invite'),
     path('delete-message/<int:pk>', vchat.DeleteMessage.as_view(), name='delete_message'),
     path('join-room/<uuid:pk>', vchat.JoinRoom.as_view(), name='join_room'),
     path('room-management/<uuid:pk>', vchat.RoomManagement.as_view(), name='room_management'),
-    
+    path('send-message/<uuid:pk>', vchat.SendMessage.as_view(), name='send_message'),
+
 ]

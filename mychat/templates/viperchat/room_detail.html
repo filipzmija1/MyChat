@@ -3,7 +3,7 @@
 {% block content %}
 <h2>{{ room.name }}</h2>
 <!-- <a href="">Invite friends</a><br> -->
-{% if user in moderators %}
+{% if user in masters %}
 <a href="{% url 'room_management' room.id %}"><button>Room management</button><br></a>
 {% endif %}
 About room: {{ room.description }}<br>
@@ -15,8 +15,13 @@ Users: {% for user in room.users.all %}
 <br>
 <h3>Chat:</h3> {% for message in messages %}
 <li> {{ message.author }} {{ message.date_created }} <br>{{ message.content }}
-    
-<a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a> {% endfor %}</li>
+   {% if user in masters or moderators %} 
+<a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</li><br>
+<form action="" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Send">
+</form>
 {% else %}
 For more details: <a href="{% url 'join_room' room.pk %}">Join this room</a>
 

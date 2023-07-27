@@ -68,6 +68,8 @@ class RoomManagementForm(forms.ModelForm):
     )
     delete_messages = forms.ChoiceField(choices=CHOICES, label='Moderators delete every message in room')
     delete_user = forms.ChoiceField(choices=CHOICES, label='Moderators delete users in room')
+    moderators_send_invitation = forms.ChoiceField(choices=CHOICES, label='Moderators invite to room')
+    members_send_invitation = forms.ChoiceField(choices=CHOICES, label='All members invite to room')
 
     class Meta:
         model = Room
@@ -78,3 +80,9 @@ class RoomManagementForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['delete_messages'].initial = True
         self.fields['delete_user'].initial = True
+        self.fields['moderators_send_invitation'].initial = True
+        self.fields['members_send_invitation'].initial = True
+
+
+class SendMessageForm(forms.Form):
+    message = forms.CharField(max_length=255)
