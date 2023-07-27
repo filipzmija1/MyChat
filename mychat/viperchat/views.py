@@ -100,6 +100,24 @@ class RoomList(ListView):
         public_rooms = Room.objects.filter(is_private=False)
         context['room_list'] = public_rooms
         return context
+
+
+class JoinRoom(LoginRequiredMixin, UpdateView):
+    model = Room
+
+    def get_object(self, *args, **kwargs):
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(pk=room_id)
+        return room
+    
+    def get(self, request, *args, **kwargs):
+        room = self.get_object()
+        if room.is_private == False:
+            room.users.add(self.request.user)
+            room.save()
+            return redirect(reverse('room_detail', kwargs={'pk': room.pk}))
+        else:
+            raise PermissionDenied
     
 
 class RoomDetails(LoginRequiredMixin, DetailView):
@@ -113,7 +131,7 @@ class RoomDetails(LoginRequiredMixin, DetailView):
         logged_user = self.request.user
         if room.is_private == True and logged_user in room.users.all():
             return room
-        elif logged_user not in room.users.all():
+        elif room.is_private == True and logged_user not in room.users.all():
             raise PermissionDenied
         else:
             return room
@@ -123,10 +141,15 @@ class RoomDetails(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         logged_user = self.request.user
         logged_user_friends = logged_user.friends.all()
+        moderators_group = Group.objects.get(name=f'{self.get_object().name}_mods')
         context['friends'] = logged_user_friends
         context['messages'] = Message.objects.filter(room=self.get_object())
+        context['moderators'] = moderators_group.user_set.all() 
         return context
         
+
+class RoomManagement(LoginRequiredMixin, UpdateView):
+    pass
 
 
 class UserOwnRooms(LoginRequiredMixin, ListView):

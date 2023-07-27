@@ -38,4 +38,7 @@ urlpatterns = [
     path('user/<slug:username>/your-rooms', vchat.UserOwnRooms.as_view(), name='logged_user_rooms'),
     path('private-room/invite/<uuid:pk>', vchat.RoomInvite.as_view(), name='room_invite'),
     path('delete-message/<int:pk>', vchat.DeleteMessage.as_view(), name='delete_message'),
+    path('join-room/<uuid:pk>', vchat.JoinRoom.as_view(), name='join_room'),
+    path('room-management/<uuid:pk>', vchat.RoomManagement.as_view(), name='room_management'),
+    
 ]
