@@ -20,7 +20,7 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 
 from .models import Room, Notification, FriendRequest, RoomInvite, Message
-from .forms import ResetPasswordForm, SearchForm
+from .forms import ResetPasswordForm, SearchForm, RoomManagementForm
 
 
 User = get_user_model()
@@ -46,7 +46,7 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         form.instance.creator = self.request.user
         room = form.save()
         room.users.add(self.request.user)
-        mods_group, status = Group.objects.get_or_create(name=f'{room.name}_mods')
+        mods_group, status = Group.objects.get_or_create(name=f'{room.name}_mods')  # Create room moderator group
         mods_group.user_set.add(self.request.user)
         message_content_type = ContentType.objects.get_for_model(Message)
 
@@ -103,6 +103,7 @@ class RoomList(ListView):
 
 
 class JoinRoom(LoginRequiredMixin, UpdateView):
+    """Allows user to join to public room"""
     model = Room
 
     def get_object(self, *args, **kwargs):
@@ -136,7 +137,6 @@ class RoomDetails(LoginRequiredMixin, DetailView):
         else:
             return room
         
-    
     def get_context_data(self,  *args, **kwargs):
         context = super().get_context_data(**kwargs)
         logged_user = self.request.user
@@ -149,8 +149,24 @@ class RoomDetails(LoginRequiredMixin, DetailView):
         
 
 class RoomManagement(LoginRequiredMixin, UpdateView):
-    pass
+    """Moderators delete messages, send invites, delete users in room"""
+    model = Room
+    form_class = RoomManagementForm
+    template_name = 'viperchat/room_management.html'
 
+    def get_object(self, *args, **kwargs):
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(id=room_id)
+        moderators_group = Group.objects.get(name=f'{room.name}_mods')
+        if self.request.user in moderators_group.user_set.all():    # Check if logged user is moderator
+            return room
+        else:
+            raise PermissionDenied
+        
+    def form_valid(self, form):
+        form.save()
+        return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
+        
 
 class UserOwnRooms(LoginRequiredMixin, ListView):
     """Display user own rooms"""

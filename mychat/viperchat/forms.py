@@ -3,6 +3,8 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from allauth.account.forms import SignupForm
 
+from .models import Room
+
 
 class UserCreationForm(UserCreationForm):
     class Meta:
@@ -57,3 +59,16 @@ class SearchForm(forms.Form):
     )
     search = forms.CharField(min_length=1, required=False)
     search_by = forms.ChoiceField(choices=CHOICES)
+
+
+class RoomManagementForm(forms.ModelForm):
+    CHOICES = (
+        (False, 'Forbidden'),
+        (True, 'Allowed'),
+    )
+    delete_messages = forms.ChoiceField(choices=CHOICES, label='Moderator delete every message in room')
+    delete_user = forms.ChoiceField(choices=CHOICES, label='Moderator delete users in room')
+
+    class Meta:
+        model = Room
+        fields = ['description', 'is_private']
