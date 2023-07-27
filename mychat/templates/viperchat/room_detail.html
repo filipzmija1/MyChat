@@ -7,4 +7,9 @@ About room: {{ room.description }}<br>
 Users: {% for user in room.users.all %}
 {{ user.username }}, 
 {% endfor %}
+<br>
+<h3>Chat:</h3> {% for message in messages %}
+<li> - {{ message.author }} {{ message.date_created }} <br>{{ message.content }} 
+<a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a></li>
+{% endfor %}
 {% endblock %}

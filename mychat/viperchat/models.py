@@ -21,6 +21,11 @@ class Room(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator')
     is_private = models.BooleanField(default=False)
 
+    class Meta:
+        permissions = [
+            ("delete_user_from_room", "Can delete user from room"),
+        ]
+
     def __str__(self):
         return self.name
 
@@ -30,8 +35,15 @@ class Message(models.Model):
     author = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
-    date_edited = models.DateTimeField(null=True)
-    
+    date_edited = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        permissions = [
+            ("delete_chat_message", "Can delete message"),
+        ]
+
+    def __str__(self):
+        return self.content
 
 class Notification(models.Model):
     id = models.UUIDField(

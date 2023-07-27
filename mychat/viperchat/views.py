@@ -7,7 +7,7 @@ from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
 from django.views.generic.edit import CreateView, UpdateView, FormView, DeleteView
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
@@ -16,8 +16,10 @@ from django.contrib.auth.password_validation import validate_password
 from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse
 from django.contrib import messages
+from django.contrib.auth.models import Group, Permission
+from django.contrib.contenttypes.models import ContentType
 
-from .models import Room, Notification, FriendRequest, RoomInvite
+from .models import Room, Notification, FriendRequest, RoomInvite, Message
 from .forms import ResetPasswordForm, SearchForm
 
 
@@ -36,7 +38,7 @@ class HomePage(View):
     
 
 class CreateRoom(LoginRequiredMixin, CreateView):
-    """This view is destined to create rooms"""
+    """Create room and groups with permissions"""
     model = Room
     fields = ['name', 'description', 'is_private']
 
@@ -44,11 +46,49 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         form.instance.creator = self.request.user
         room = form.save()
         room.users.add(self.request.user)
+        mods_group, status = Group.objects.get_or_create(name=f'{room.name}_mods')
+        mods_group.user_set.add(self.request.user)
+        message_content_type = ContentType.objects.get_for_model(Message)
+
+        delete_message_permission = Permission.objects.get(
+            codename='delete_chat_message',
+            content_type=message_content_type,
+        )
+
+        mods_group.permissions.add(delete_message_permission)
+        room_content_type = ContentType.objects.get_for_model(Room)
+        delete_user_permission = Permission.objects.get(
+            codename='delete_user_from_room',
+            content_type=room_content_type,
+        )
+        mods_group.permissions.add(delete_user_permission)
+
         return super().form_valid(form)
     
     def get_success_url(self):
         return reverse('room_detail', kwargs={'pk': self.object.pk})
         
+
+class DeleteMessage(LoginRequiredMixin, DeleteView):
+    """logged user or room moderator can delete message in room"""
+    model = Message
+
+    def get_object(self, *args, **kwargs):
+        message_id = self.kwargs['pk']
+        message = Message.objects.get(id=message_id)
+        room = message.room
+        moderators_group = Group.objects.get(name=f'{room.name}_mods')
+        logged_user = self.request.user
+        if logged_user in moderators_group.user_set.all() or logged_user == message.author: 
+            return message
+        else:
+            raise PermissionDenied
+        
+    def get_success_url(self):
+        room = self.get_object().room
+        return reverse('room_detail', kwargs={'pk': room.pk})
+
+
 
 class RoomList(ListView):
     """Shows every room"""
@@ -62,7 +102,7 @@ class RoomList(ListView):
         return context
     
 
-class RoomDetails(DetailView):
+class RoomDetails(LoginRequiredMixin, DetailView):
     """Shows room details"""
     model = Room
     context_object_name = 'room'
@@ -73,7 +113,7 @@ class RoomDetails(DetailView):
         logged_user = self.request.user
         if room.is_private == True and logged_user in room.users.all():
             return room
-        elif room.is_private == True and logged_user not in room.users.all():
+        elif logged_user not in room.users.all():
             raise PermissionDenied
         else:
             return room
@@ -84,6 +124,7 @@ class RoomDetails(DetailView):
         logged_user = self.request.user
         logged_user_friends = logged_user.friends.all()
         context['friends'] = logged_user_friends
+        context['messages'] = Message.objects.filter(room=self.get_object())
         return context
         
 
