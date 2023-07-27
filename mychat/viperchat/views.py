@@ -51,7 +51,7 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         message_content_type = ContentType.objects.get_for_model(Message)
 
         delete_message_permission = Permission.objects.get(
-            codename='delete_chat_message',
+            codename='delete_message_from_room',
             content_type=message_content_type,
         )
 
@@ -79,7 +79,10 @@ class DeleteMessage(LoginRequiredMixin, DeleteView):
         room = message.room
         moderators_group = Group.objects.get(name=f'{room.name}_mods')
         logged_user = self.request.user
-        if logged_user in moderators_group.user_set.all() or logged_user == message.author: 
+        delete_permission = Permission.objects.get(codename='delete_message_from_room')
+        if logged_user == message.author:
+            return message
+        elif delete_permission in moderators_group.permissions.all() and logged_user in moderators_group.user_set.all():    # Check if delete permission and logged user are in moderate group
             return message
         else:
             raise PermissionDenied
@@ -158,7 +161,7 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         room_id = self.kwargs['pk']
         room = Room.objects.get(id=room_id)
         moderators_group = Group.objects.get(name=f'{room.name}_mods')
-        if self.request.user in moderators_group.user_set.all():    # Check if logged user is moderator
+        if self.request.user == room.creator:
             return room
         else:
             raise PermissionDenied

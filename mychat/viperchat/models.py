@@ -39,7 +39,7 @@ class Message(models.Model):
 
     class Meta:
         permissions = [
-            ("delete_chat_message", "Can delete message"),
+            ("delete_message_from_room", "Can delete message from room"),
         ]
 
     def __str__(self):

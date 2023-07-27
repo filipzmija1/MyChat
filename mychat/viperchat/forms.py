@@ -66,9 +66,15 @@ class RoomManagementForm(forms.ModelForm):
         (False, 'Forbidden'),
         (True, 'Allowed'),
     )
-    delete_messages = forms.ChoiceField(choices=CHOICES, label='Moderator delete every message in room')
-    delete_user = forms.ChoiceField(choices=CHOICES, label='Moderator delete users in room')
+    delete_messages = forms.ChoiceField(choices=CHOICES, label='Moderators delete every message in room')
+    delete_user = forms.ChoiceField(choices=CHOICES, label='Moderators delete users in room')
 
     class Meta:
         model = Room
         fields = ['description', 'is_private']
+
+    def __init__(self, *args, **kwargs):
+        """Set default data in delete_messages field and delete_user"""
+        super().__init__(*args, **kwargs)
+        self.fields['delete_messages'].initial = True
+        self.fields['delete_user'].initial = True
