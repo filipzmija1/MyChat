@@ -36,9 +36,19 @@ Email: {{ user.email }}<br>
 First name: {{ user.first_name }}<br>
 Surname: {{ user.last_name }}<br>
 Friends: <br>{% for friend in user.friends.all %}
-            <a href="{% url 'user_detail' friend.username %}">{{ friend.username }} {% if request.user == user %}| 
-                 <a href="{% url 'delete_friend' friend.username %}">Delete friend</a></a>{% endif %}<br>
+            <a href="{% url 'user_detail' friend.username %}">{{ friend.username }} </a>{% if request.user == user %}| 
+                 <a href="{% url 'delete_friend' friend.username %}">Delete friend</a>{% endif %}<br>
         {% endfor %}
-
+<br>
+{% if chat.exists %}
+{% for message in chat %}
+<li> {{ message.author }} {{ message.date_created }} <br>{{ message.content }}
+{% endfor %}
+<form method="POST" action="">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Send">
+</form>
+{% endif %}
 
 {% endblock %}

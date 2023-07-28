@@ -138,7 +138,7 @@ class JoinRoom(LoginRequiredMixin, UpdateView):
     
 
 class RoomDetail(LoginRequiredMixin, FormMixin, DetailView):
-    """Shows room details and gives posibility to write message in room"""
+    """Shows room details and gives posibility to write message in chatroom"""
     model = Room
     context_object_name = 'room'
     form_class = SendMessageForm
@@ -180,7 +180,6 @@ class RoomDetail(LoginRequiredMixin, FormMixin, DetailView):
         else:
             return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
 
-
     
 class RoomManagement(LoginRequiredMixin, UpdateView):
     """Moderators delete messages, send invites, delete users in room"""
@@ -191,8 +190,8 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
     def get_object(self, *args, **kwargs):
         room_id = self.kwargs['pk']
         room = Room.objects.get(id=room_id)
-        moderators_group = Group.objects.get(name=f'{room.name}_mods')
-        if self.request.user == room.creator:
+        room_masters = Group.objects.get(name=f'{room.name}_masters')
+        if self.request.user in room_masters.user_set.all():
             return room
         else:
             raise PermissionDenied
@@ -214,11 +213,12 @@ class UserOwnRooms(LoginRequiredMixin, ListView):
         return rooms
 
 
-class UserProfile(DetailView):
+class UserProfile(FormMixin, DetailView):
     """Shows user profile"""
     model = User
     template_name = 'viperchat/user_profile.html'
     context_object_name = 'user'
+    form_class = SendMessageForm
 
     def get_object(self, queryset=None):
         username = self.kwargs['username']
@@ -234,8 +234,23 @@ class UserProfile(DetailView):
         context['friend_request'] = friend_request
         context['friend_request_mirror'] = friend_request_mirror
         context['user_rooms'] = user_rooms
+        if self.request.user in self.get_object().friends.all():
+            friend_messages = Message.objects.filter(author=self.get_object(), message_receiver=self.request.user)
+            logged_user_messages = Message.objects.filter(author=self.request.user, message_receiver=self.get_object())
+            context['chat'] = (friend_messages | logged_user_messages).order_by('date_created')
+            return context
         return context
     
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        if form.is_valid():
+            message = form.cleaned_data['message']
+            author = self.request.user
+            Message.objects.create(author=author, content=message, message_receiver=self.get_object())
+            return redirect(reverse('user_detail', kwargs={'username': self.get_object().username}))
+        else:
+            return redirect(reverse('user_detail', kwargs={'username': self.get_object().username}))
+        
 
 class UserProfileEdit(LoginRequiredMixin, UpdateView):
     """This view is destined to change user data"""
