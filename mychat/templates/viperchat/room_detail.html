@@ -15,7 +15,7 @@ Users: {% for user in room.users.all %}
 <br>
 <h3>Chat:</h3> {% for message in messages %}
 <li> {{ message.author }} {{ message.date_created }} <br>{{ message.content }}
-   {% if user in masters or moderators %} 
+   {% if user in masters or user == message.author or user in moderators %} 
 <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</li><br>
 <form action="" method="POST">
     {% csrf_token %}

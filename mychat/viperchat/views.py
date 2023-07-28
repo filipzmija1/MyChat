@@ -6,7 +6,7 @@ from django.forms.models import BaseModelForm
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
-from django.views.generic.edit import CreateView, UpdateView, FormView, DeleteView
+from django.views.generic.edit import CreateView, UpdateView, FormView, DeleteView, FormMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView
 from django.contrib.auth import get_user_model
@@ -93,7 +93,7 @@ class DeleteMessage(LoginRequiredMixin, DeleteView):
         room_masters = Group.objects.get(name=f'{room.name}_masters')
         logged_user = self.request.user
         delete_message_permission = Permission.objects.get(codename='delete_message_from_room')
-        if logged_user in room_masters.user_set.all():     # Check if user belongs to room_masters group
+        if logged_user in room_masters.user_set.all() or logged_user == message.author:     # Check if user belongs to room_masters group
             return message
         elif delete_message_permission in moderators_group.permissions.all() and logged_user in moderators_group.user_set.all():    # Check if delete permission and logged user are in moderate group
             return message
@@ -137,10 +137,11 @@ class JoinRoom(LoginRequiredMixin, UpdateView):
             raise PermissionDenied
     
 
-class RoomDetail(LoginRequiredMixin, DetailView):
+class RoomDetail(LoginRequiredMixin, FormMixin, DetailView):
     """Shows room details and gives posibility to write message in room"""
     model = Room
     context_object_name = 'room'
+    form_class = SendMessageForm
 
     def get_object(self, *args, **kwargs):
         room_id = self.kwargs['pk']
@@ -168,38 +169,17 @@ class RoomDetail(LoginRequiredMixin, DetailView):
             context['moderators'] = room_moderators.user_set.all()
         return context
     
-
-class SendMessage(LoginRequiredMixin, CreateView):
-    """Send message in DetailView template"""
-    model = Message
-    template_name = 'viperchat/room_detail.html'
-    form_class = SendMessageForm
-
-    def get_object(self):
-        room_id = self.kwargs['pk']
-        room = Room.objects.get(id=room_id)
-        return room
-    
-    def get_success_url(self):
-        return reverse_lazy('room_detail', kwargs={'pk': self.get_object().pk})
-    
     def post(self, request, *args, **kwargs):
-        form = SendMessageForm(request.POST)
+        form = self.get_form()
         if form.is_valid():
             room = self.get_object()
             author = self.request.user
-            Message.objects.create(room=room, author=author)
-            return redirect('room_detail', pk=room.pk) 
-        context = self.get_context_data(**kwargs)
-        context['form'] = form
-        return self.render_to_response(context)
+            message = form.cleaned_data['message']
+            Message.objects.create(room=room, author=author, content=message)
+            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
+        else:
+            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        room_detail_context = RoomDetail().get_context_data(**kwargs)
-        context.update(room_detail_context)
-        return context
-    
 
     
 class RoomManagement(LoginRequiredMixin, UpdateView):

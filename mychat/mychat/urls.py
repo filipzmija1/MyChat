@@ -39,6 +39,4 @@ urlpatterns = [
     path('delete-message/<int:pk>', vchat.DeleteMessage.as_view(), name='delete_message'),
     path('join-room/<uuid:pk>', vchat.JoinRoom.as_view(), name='join_room'),
     path('room-management/<uuid:pk>', vchat.RoomManagement.as_view(), name='room_management'),
-    path('send-message/<uuid:pk>', vchat.SendMessage.as_view(), name='send_message'),
-
 ]
