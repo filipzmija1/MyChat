@@ -105,7 +105,6 @@ class DeleteMessage(LoginRequiredMixin, DeleteView):
         return reverse('room_detail', kwargs={'pk': room.pk})
 
 
-
 class RoomList(ListView):
     """Shows every room"""
     model = Room
@@ -129,8 +128,10 @@ class JoinRoom(LoginRequiredMixin, UpdateView):
     
     def get(self, request, *args, **kwargs):
         room = self.get_object()
+        member_group = Group.objects.get(name=f'{room.name}_members')
         if room.is_private == False:
             room.users.add(self.request.user)
+            member_group.user_set.add(self.request.user)
             room.save()
             return redirect(reverse('room_detail', kwargs={'pk': room.pk}))
         else:
@@ -197,6 +198,16 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
             raise PermissionDenied
         
     def form_valid(self, form):
+        moderator_delete_messages_permission = form.cleaned_data['delete_messages']
+        moderator_delete_user_permission = form.cleaned_data['delete_user']
+        moderators_send_invite_permission = form.cleaned_data['moderators_send_invitation']
+        members_send_invite_permission = form.cleaned_data['members_send_invitation']
+        moderator_group = Group.objects.get(name=f'{self.get_object().name}_mods')
+        member_group = Group.objects.get(name=f'{self.get_object().name}_members')
+        if moderator_delete_messages_permission == False:
+            moderator_group.permissions.get(codename='delete_message_from_room').delete()
+        if moderator_delete_messages_permission == True:
+            moderator_group.permissions.get(codename='delete_message_from_room').delete()
         form.save()
         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
         
@@ -213,7 +224,7 @@ class UserOwnRooms(LoginRequiredMixin, ListView):
         return rooms
 
 
-class UserProfile(FormMixin, DetailView):
+class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
     """Shows user profile"""
     model = User
     template_name = 'viperchat/user_profile.html'
