@@ -7,6 +7,11 @@ class User(AbstractUser):
     friends = models.ManyToManyField('self', blank=True)
     username = models.SlugField(unique=True, max_length=150)
 
+    class Meta:
+        permissions = [
+            ('display_user_profile', 'Can display user informations'),
+        ]
+
 
 class Room(models.Model):
     id = models.UUIDField(
@@ -24,6 +29,7 @@ class Room(models.Model):
     class Meta:
         permissions = [
             ("delete_user_from_room", "Can delete user from room"),
+            ("display_room_data", "Can see room details"),
         ]
 
     def __str__(self):
