@@ -22,6 +22,7 @@ from django.views.generic.detail import SingleObjectMixin
 
 from .models import Room, Notification, FriendRequest, RoomInvite, Message
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm
+from .permissions import *
 
 
 User = get_user_model()
