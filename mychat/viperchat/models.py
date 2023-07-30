@@ -11,6 +11,17 @@ class User(AbstractUser):
         permissions = [
             ('display_user_profile', 'Can display user informations'),
         ]
+    
+
+class PermissionSettings(models.Model):
+    CHOICES = (
+        ('Allowed', 'Allowed'),
+        ('Forbidden', 'Forbidden'),
+    )
+    delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    moderators_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    members_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
 
 
 class Room(models.Model):
@@ -25,6 +36,7 @@ class Room(models.Model):
     users = models.ManyToManyField(User, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator')
     is_private = models.BooleanField(default=False)
+    permission_settings = models.OneToOneField(PermissionSettings, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         permissions = [

@@ -20,7 +20,7 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.views.generic.detail import SingleObjectMixin
 
-from .models import Room, Notification, FriendRequest, RoomInvite, Message
+from .models import Room, Notification, FriendRequest, RoomInvite, Message, PermissionSettings
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm
 from .permissions import *
 
@@ -47,6 +47,8 @@ class CreateRoom(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
+        permission_settings = PermissionSettings.objects.create()
+        form.instance.permission_settings = permission_settings
         room = form.save()
         room.users.add(self.request.user)
 
@@ -189,6 +191,15 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
             return room
         else:
             raise PermissionDenied
+
+    def get_initial(self):
+        initial = {}
+        permission_settings = self.get_object().permission_settings
+        initial['delete_messages'] = permission_settings.delete_messages
+        initial['delete_user'] = permission_settings.delete_user
+        initial['moderators_send_invitation'] = permission_settings.moderators_send_invitation
+        initial['members_send_invitation'] = permission_settings.members_send_invitation
+        return self.initial.copy()
         
     def form_valid(self, form):
         moderator_delete_messages_permission = form.cleaned_data['delete_messages']
@@ -197,11 +208,12 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         members_send_invite_permission = form.cleaned_data['members_send_invitation']
         moderator_group = Group.objects.get(name=f'{self.get_object().name}_mods')
         member_group = Group.objects.get(name=f'{self.get_object().name}_members')
+        permission_settings = self.get_object().permission_settings
         
-        set_permission(moderator_delete_messages_permission, moderator_group, add_delete_message_permission, delete_delete_message_permission)
-        set_permission(moderator_delete_user_permission, moderator_group, add_delete_user_from_group_permission, delete_user_from_group_permission)
-        set_permission(moderators_send_invite_permission, moderator_group, add_send_invitation_permission, delete_send_invitation_permission)
-        set_permission(members_send_invite_permission, member_group, add_send_invitation_permission, delete_send_invitation_permission)
+        set_permission(moderator_delete_messages_permission, moderator_group, add_delete_message_permission, remove_delete_message_permission)
+        set_permission(moderator_delete_user_permission, moderator_group, add_delete_user_from_group_permission, remove_user_from_group_permission)
+        set_permission(moderators_send_invite_permission, moderator_group, add_send_invitation_permission, remove_send_invitation_permission)
+        set_permission(members_send_invite_permission, member_group, add_send_invitation_permission, remove_send_invitation_permission)
 
         form.save()
         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))

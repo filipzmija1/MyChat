@@ -63,8 +63,8 @@ class SearchForm(forms.Form):
 
 class RoomManagementForm(forms.ModelForm):
     CHOICES = (
-        (True, 'Allowed'),
-        (False, 'Forbidden'),
+        ('Allowed', 'Allowed'),
+        ('Forbidden', 'Forbidden'),
     )
     delete_messages = forms.ChoiceField(choices=CHOICES, label='Moderators delete every message in room')
     delete_user = forms.ChoiceField(choices=CHOICES, label='Moderators delete users in room')
