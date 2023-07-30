@@ -63,8 +63,8 @@ class SearchForm(forms.Form):
 
 class RoomManagementForm(forms.ModelForm):
     CHOICES = (
-        (False, 'Forbidden'),
         (True, 'Allowed'),
+        (False, 'Forbidden'),
     )
     delete_messages = forms.ChoiceField(choices=CHOICES, label='Moderators delete every message in room')
     delete_user = forms.ChoiceField(choices=CHOICES, label='Moderators delete users in room')
@@ -74,14 +74,6 @@ class RoomManagementForm(forms.ModelForm):
     class Meta:
         model = Room
         fields = ['description', 'is_private']
-
-    def __init__(self, *args, **kwargs):
-        """Set default data in delete_messages field and delete_user"""
-        super().__init__(*args, **kwargs)
-        self.fields['delete_messages'].initial = True
-        self.fields['delete_user'].initial = True
-        self.fields['moderators_send_invitation'].initial = True
-        self.fields['members_send_invitation'].initial = True
 
 
 class SendMessageForm(forms.Form):

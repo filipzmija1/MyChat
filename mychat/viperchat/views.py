@@ -58,23 +58,15 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         members_group.user_set.add(self.request.user)
         room_masters.user_set.add(self.request.user)
 
-        message_content_type = ContentType.objects.get_for_model(Message)
-        room_content_type = ContentType.objects.get_for_model(Room)
-        room_invite_content_type = ContentType.objects.get_for_model(RoomInvite)
+        add_delete_message_permission(moderators_group)
+        add_delete_user_from_group_permission(moderators_group)
+        add_send_invitation_permission(moderators_group)
 
-        delete_message_permission = Permission.objects.get(codename='delete_message_from_room', content_type=message_content_type)
-        delete_user_permission = Permission.objects.get(codename='delete_user_from_room', content_type=room_content_type)
-        invite_to_room_permission = Permission.objects.get(codename='send_invitation', content_type=room_invite_content_type)
+        add_send_invitation_permission(members_group)
 
-        moderators_group.permissions.add(delete_message_permission)
-        moderators_group.permissions.add(delete_user_permission)
-        moderators_group.permissions.add(invite_to_room_permission)
-
-        members_group.permissions.add(invite_to_room_permission)
-
-        room_masters.permissions.add(delete_message_permission)
-        room_masters.permissions.add(delete_user_permission)
-        room_masters.permissions.add(invite_to_room_permission)
+        add_delete_message_permission(room_masters)
+        add_delete_user_from_group_permission(room_masters)
+        add_send_invitation_permission(room_masters)
         
         return super().form_valid(form)
     
@@ -205,10 +197,12 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         members_send_invite_permission = form.cleaned_data['members_send_invitation']
         moderator_group = Group.objects.get(name=f'{self.get_object().name}_mods')
         member_group = Group.objects.get(name=f'{self.get_object().name}_members')
-        if moderator_delete_messages_permission == False:
-            moderator_group.permissions.get(codename='delete_message_from_room').delete()
-        if moderator_delete_messages_permission == True:
-            moderator_group.permissions.get(codename='delete_message_from_room').delete()
+        
+        set_permission(moderator_delete_messages_permission, moderator_group, add_delete_message_permission, delete_delete_message_permission)
+        set_permission(moderator_delete_user_permission, moderator_group, add_delete_user_from_group_permission, delete_user_from_group_permission)
+        set_permission(moderators_send_invite_permission, moderator_group, add_send_invitation_permission, delete_send_invitation_permission)
+        set_permission(members_send_invite_permission, member_group, add_send_invitation_permission, delete_send_invitation_permission)
+
         form.save()
         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
         
