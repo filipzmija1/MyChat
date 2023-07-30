@@ -32,7 +32,7 @@ class Room(models.Model):
         editable=False
     )
     name = models.CharField(max_length=155, unique=True)
-    description = models.TextField()
+    description = models.TextField(blank=True, null=True)
     users = models.ManyToManyField(User, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator')
     is_private = models.BooleanField(default=False)

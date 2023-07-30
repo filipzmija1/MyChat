@@ -1,11 +1,15 @@
 {% extends 'viperchat/base.html' %}
+{% load crispy_forms_tags %}
 
 {% block title %}Management{% endblock %}
 
 {% block content %}
-<form method="POST" action="">
+<form method="post" action="" class="form-horizontal">
     {% csrf_token %}
     {{ form.as_p }}
+    {{ second_form.as_p }}
+    <div class="form-actions">
     <input type="submit" value="Save changes">
+    </div>
 </form>
 {% endblock %}
