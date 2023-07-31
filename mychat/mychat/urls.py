@@ -40,5 +40,6 @@ urlpatterns = [
     path('join-room/<uuid:pk>', vchat.JoinRoom.as_view(), name='join_room'),
     path('room-management/<uuid:pk>', vchat.RoomManagement.as_view(), name='room_management'),
     path('room-management/<uuid:pk>/groups', vchat.RoomRanksManagement.as_view(), name='room_groups_management'),
+    path('room-management/<uuid:pk>/groups/<slug:name>', vchat.UserRankEdit.as_view(), name='user_rank_edit'),
     
 ]

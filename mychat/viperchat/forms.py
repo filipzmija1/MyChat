@@ -70,17 +70,9 @@ class RoomManagementForm(forms.ModelForm):
 class RoomPermissionsForm(forms.ModelForm):
     class Meta:
         model = RoomPermissionSettings
-        fields = ['delete_messages', 'delete_user', 'moderators_send_invitation', 'members_send_invitation']
+        fields = ['moderators_delete_messages', 'moderators_delete_user', 'moderators_send_invitation', 'members_send_invitation']
 
 
 class SendMessageForm(forms.Form):
     message = forms.CharField(max_length=255)
 
-
-class GiveRankForm(forms.Form):
-    CHOICES = (
-        ('owners', 'owners'),
-        ('moderators', 'moderators'),
-        ('members', 'members')
-    )
-    rank = forms.ChoiceField(choices=CHOICES)

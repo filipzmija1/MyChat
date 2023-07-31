@@ -18,8 +18,8 @@ class RoomPermissionSettings(models.Model):
         ('Allowed', 'Allowed'),
         ('Forbidden', 'Forbidden'),
     )
-    delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    moderators_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    moderators_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     members_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
 

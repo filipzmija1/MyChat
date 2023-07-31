@@ -1,0 +1,12 @@
+{% extends 'viperchat/base.html' %}
+{% load template_filters %}
+
+{% block title %}Rank management {% endblock %}
+
+{% block content %}
+<h2>{{ group.name|split_group_name }}</h2>
+{% for user in group|group_users %}
+    <li>{{ user.username }}<br>
+    _________________________________</li>
+{% endfor %}
+{% endblock %}

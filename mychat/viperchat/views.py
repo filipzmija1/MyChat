@@ -19,7 +19,7 @@ from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
 
 from .models import Room, Notification, FriendRequest, RoomInvite, Message, RoomPermissionSettings
-from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, RoomPermissionsForm, GiveRankForm
+from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, RoomPermissionsForm
 from .permissions import *
 
 
@@ -50,12 +50,11 @@ class CreateRoom(LoginRequiredMixin, CreateView):
         room = form.save()
         room.users.add(self.request.user)
 
+        room_masters, is_created = Group.objects.get_or_create(name=f'{room.name}_masters') # Create masters group
         moderators_group, status = Group.objects.get_or_create(name=f'{room.name}_mods')  # Create moderator group
         members_group, created = Group.objects.get_or_create(name=f'{room.name}_members')    # Create members group
-        room_masters, is_created = Group.objects.get_or_create(name=f'{room.name}_masters') # Create owners group
+        
 
-        moderators_group.user_set.add(self.request.user)      
-        members_group.user_set.add(self.request.user)
         room_masters.user_set.add(self.request.user)
 
         add_delete_message_permission(moderators_group)
@@ -204,8 +203,8 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         permission_settings_form = RoomPermissionsForm(self.request.POST)
         permission_settings = self.get_object().permission_settings
         if form.is_valid() and permission_settings_form.is_valid():
-            moderator_delete_messages_permission = permission_settings_form.cleaned_data['delete_messages']
-            moderator_delete_user_permission = permission_settings_form.cleaned_data['delete_user']
+            moderator_delete_messages_permission = permission_settings_form.cleaned_data['moderators_delete_messages']
+            moderator_delete_user_permission = permission_settings_form.cleaned_data['moderators_delete_user']
             moderators_send_invite_permission = permission_settings_form.cleaned_data['moderators_send_invitation']
             members_send_invite_permission = permission_settings_form.cleaned_data['members_send_invitation']
             #   Get groups
@@ -218,8 +217,8 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         #   set member permissions
         set_permission(members_send_invite_permission, member_group, add_send_invitation_permission, remove_send_invitation_permission)
         #   Save permissions settings to database
-        permission_settings.delete_messages = moderator_delete_messages_permission
-        permission_settings.delete_user = moderator_delete_user_permission
+        permission_settings.moderators_delete_messages = moderator_delete_messages_permission
+        permission_settings.moderators_delete_user = moderator_delete_user_permission
         permission_settings.moderators_send_invitation = moderators_send_invite_permission
         permission_settings.members_send_invitation = members_send_invite_permission
 
@@ -228,11 +227,10 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
     
 
-class RoomRanksManagement(LoginRequiredMixin, FormMixin, ListView):
+class RoomRanksManagement(LoginRequiredMixin, ListView):
     model = Group
     context_object_name = 'groups'
     template_name = 'viperchat/room_groups_management.html'
-    form_class = GiveRankForm
 
     def get_object(self, *args, **kwargs):
         room_id = self.kwargs['pk']
@@ -241,10 +239,36 @@ class RoomRanksManagement(LoginRequiredMixin, FormMixin, ListView):
 
     def get_queryset(self):
         logged_user = self.request.user
-        room_owners_group, created = Group.objects.get_or_create(name=f'{self.get_object().name}_masters')
+        room_owners_group = Group.objects.get(name=f'{self.get_object().name}_masters')
         if logged_user in room_owners_group.user_set.all():
             return Group.objects.filter(name__startswith=f'{self.get_object().name}_')
         
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['room'] = self.get_object()
+        return context
+        
+
+class UserRankEdit(LoginRequiredMixin, DetailView):
+    model = Room
+    template_name = 'viperchat/rank_management.html'
+
+    def get_object(self, *args, **kwargs):
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(id=room_id)
+        logged_user = self.request.user
+        room_owners_group = Group.objects.get(name=f'{room.name}_masters')
+        if logged_user in room_owners_group.user_set.all():
+            return room
+        else:
+            raise PermissionDenied
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        group_name = self.kwargs['name']
+        context['group'] = Group.objects.get(name=group_name)
+        return context
+    
 
 class UserOwnRooms(LoginRequiredMixin, ListView):
     """Display user own rooms"""
