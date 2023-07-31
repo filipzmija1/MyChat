@@ -17,10 +17,8 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
-from django.contrib.contenttypes.models import ContentType
-from django.views.generic.detail import SingleObjectMixin
 
-from .models import Room, Notification, FriendRequest, RoomInvite, Message, PermissionSettings
+from .models import Room, Notification, FriendRequest, RoomInvite, Message, RoomPermissionSettings
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, RoomPermissionsForm
 from .permissions import *
 
@@ -47,14 +45,14 @@ class CreateRoom(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        permission_settings = PermissionSettings.objects.create()
+        permission_settings = RoomPermissionSettings.objects.create()
         form.instance.permission_settings = permission_settings
         room = form.save()
         room.users.add(self.request.user)
 
         moderators_group, status = Group.objects.get_or_create(name=f'{room.name}_mods')  # Create moderator group
         members_group, created = Group.objects.get_or_create(name=f'{room.name}_members')    # Create members group
-        room_masters, is_created = Group.objects.get_or_create(name=f'{room.name}_masters')
+        room_masters, is_created = Group.objects.get_or_create(name=f'{room.name}_masters') # Create owners group
 
         moderators_group.user_set.add(self.request.user)      
         members_group.user_set.add(self.request.user)
@@ -195,6 +193,7 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['room'] = self.get_object()
         if 'form' not in context:
             context['form'] = self.form_class(instance=self.get_object())
         if 'second_form' not in context:
@@ -227,6 +226,23 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         permission_settings.save()
         form.save()
         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
+    
+
+class RoomUsersManagement(LoginRequiredMixin, ListView):
+    model = User
+    context_object_name = 'users'
+    template_name = 'viperchat/room_users.html'
+
+    def get_object(self, *args, **kwargs):
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(id=room_id)
+        return room
+
+    def get_queryset(self):
+        logged_user = self.request.user
+        room_owners_group, created = Group.objects.get_or_create(name=f'{self.get_object().name}_masters')
+        if logged_user in room_owners_group.user_set.all():
+            return self.get_object().users.all()
         
 
 class UserOwnRooms(LoginRequiredMixin, ListView):
@@ -361,15 +377,19 @@ class SearchUserOrRoom(FormView):
     
 
 class DeleteFriend(LoginRequiredMixin, View):
-    """View destined to delete friend from friendlist"""
+    """View destined to delete friend from friendlist and from friends groups"""
     def get(self, request, *args, **kwargs):
         user_username = self.kwargs['username']
         user_to_remove = User.objects.get(username=user_username)
         logged_user = self.request.user
+        logged_user_friends_group, created = Group.objects.get_or_create(name=f'{logged_user}_friends')
+        removing_user_friends_group, created = Group.objects.get_or_create(name=f'{user_to_remove}_friends')
         if not logged_user.friends.filter(username=user_to_remove.username).exists():
             raise PermissionDenied
         else:
             logged_user.friends.remove(user_to_remove)
+            logged_user_friends_group.user_set.remove(user_to_remove)
+            removing_user_friends_group.user_set.remove(logged_user)
             return redirect(reverse('user_detail', kwargs={'username': logged_user.username}))
         
         
@@ -443,7 +463,7 @@ class FriendRequestList(LoginRequiredMixin, ListView):
             return context
         
 
-class FriendRequestUpdate(LoginRequiredMixin, UpdateView):
+class FriendRequestAnswer(LoginRequiredMixin, UpdateView):
     """See friend request details and changes request status plus adding to friends or decline."""
     model = FriendRequest
     context_object_name = 'friend_request'
@@ -459,9 +479,14 @@ class FriendRequestUpdate(LoginRequiredMixin, UpdateView):
             return friend_request
         
     def form_valid(self, form):
+        """If user accepts """
         friend_request = form.instance
         if 'accept_button' in self.request.POST:
             friend_request.status = 'accepted'
+            friends_group, created = Group.objects.get_or_create(name=f'{self.request.user}_friends')
+            sender_friends_group, created = Group.objects.get_or_create(name=f'{friend_request.sender}_friends')
+            sender_friends_group.user_set.add(self.request.user)
+            friends_group.user_set.add(friend_request.sender)
             self.request.user.friends.add(friend_request.sender)
         elif 'decline_button' in self.request.POST:
             friend_request.status = 'canceled'

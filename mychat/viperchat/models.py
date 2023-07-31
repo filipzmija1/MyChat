@@ -13,7 +13,7 @@ class User(AbstractUser):
         ]
     
 
-class PermissionSettings(models.Model):
+class RoomPermissionSettings(models.Model):
     CHOICES = (
         ('Allowed', 'Allowed'),
         ('Forbidden', 'Forbidden'),
@@ -36,7 +36,7 @@ class Room(models.Model):
     users = models.ManyToManyField(User, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator')
     is_private = models.BooleanField(default=False)
-    permission_settings = models.OneToOneField(PermissionSettings, on_delete=models.CASCADE, null=True, blank=True)
+    permission_settings = models.OneToOneField(RoomPermissionSettings, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         permissions = [

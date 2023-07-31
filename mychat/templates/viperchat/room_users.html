@@ -1,0 +1,9 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %}Users management {% endblock %}
+
+{% block content %}
+{% for user in users %}
+<li>{{ user.username }}</li>
+{% endfor %}
+{% endblock %}

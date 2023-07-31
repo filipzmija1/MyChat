@@ -33,10 +33,12 @@ urlpatterns = [
     path('friend-request/<slug:username>', vchat.FriendNotifiaction.as_view(), name='friend_notification'),
     path('user/<slug:username>/notifications', vchat.NotificationList.as_view(), name='notification_list'),
     path('user/<slug:username>/friend-requests', vchat.FriendRequestList.as_view(), name='friend_request_list'),
-    path('friend-requests/<uuid:pk>', vchat.FriendRequestUpdate.as_view(), name='friend_request_detail'),
+    path('friend-requests/<uuid:pk>', vchat.FriendRequestAnswer.as_view(), name='friend_request_detail'),
     path('request-delete/<uuid:pk>', vchat.FriendRequestDelete.as_view(), name='friend_request_delete'),
     path('user/<slug:username>/your-rooms', vchat.UserOwnRooms.as_view(), name='logged_user_rooms'),
     path('delete-message/<int:pk>', vchat.DeleteMessage.as_view(), name='delete_message'),
     path('join-room/<uuid:pk>', vchat.JoinRoom.as_view(), name='join_room'),
     path('room-management/<uuid:pk>', vchat.RoomManagement.as_view(), name='room_management'),
+    path('room-management/<uuid:pk>/users', vchat.RoomUsersManagement.as_view(), name='room_user_management'),
+    
 ]
