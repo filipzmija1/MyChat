@@ -75,3 +75,12 @@ class RoomPermissionsForm(forms.ModelForm):
 
 class SendMessageForm(forms.Form):
     message = forms.CharField(max_length=255)
+
+
+class GiveRankForm(forms.Form):
+    CHOICES = (
+        ('owners', 'owners'),
+        ('moderators', 'moderators'),
+        ('members', 'members')
+    )
+    rank = forms.ChoiceField(choices=CHOICES)

@@ -19,7 +19,7 @@ from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
 
 from .models import Room, Notification, FriendRequest, RoomInvite, Message, RoomPermissionSettings
-from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, RoomPermissionsForm
+from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, RoomPermissionsForm, GiveRankForm
 from .permissions import *
 
 
@@ -228,10 +228,11 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
     
 
-class RoomUsersManagement(LoginRequiredMixin, ListView):
+class RoomRanksManagement(LoginRequiredMixin, FormMixin, ListView):
     model = User
     context_object_name = 'users'
     template_name = 'viperchat/room_users.html'
+    form_class = GiveRankForm
 
     def get_object(self, *args, **kwargs):
         room_id = self.kwargs['pk']
@@ -243,6 +244,9 @@ class RoomUsersManagement(LoginRequiredMixin, ListView):
         room_owners_group, created = Group.objects.get_or_create(name=f'{self.get_object().name}_masters')
         if logged_user in room_owners_group.user_set.all():
             return self.get_object().users.all()
+        
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
         
 
 class UserOwnRooms(LoginRequiredMixin, ListView):
