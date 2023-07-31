@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractUser
+from django.contrib.auth.models import AbstractUser, Group
 
 import uuid
 
@@ -11,7 +11,7 @@ class User(AbstractUser):
         permissions = [
             ('display_user_profile', 'Can display user informations'),
         ]
-    
+
 
 class RoomPermissionSettings(models.Model):
     CHOICES = (

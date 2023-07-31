@@ -229,9 +229,9 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
     
 
 class RoomRanksManagement(LoginRequiredMixin, FormMixin, ListView):
-    model = User
-    context_object_name = 'users'
-    template_name = 'viperchat/room_users.html'
+    model = Group
+    context_object_name = 'groups'
+    template_name = 'viperchat/room_groups_management.html'
     form_class = GiveRankForm
 
     def get_object(self, *args, **kwargs):
@@ -243,10 +243,7 @@ class RoomRanksManagement(LoginRequiredMixin, FormMixin, ListView):
         logged_user = self.request.user
         room_owners_group, created = Group.objects.get_or_create(name=f'{self.get_object().name}_masters')
         if logged_user in room_owners_group.user_set.all():
-            return self.get_object().users.all()
-        
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
+            return Group.objects.filter(name__startswith=f'{self.get_object().name}_')
         
 
 class UserOwnRooms(LoginRequiredMixin, ListView):
