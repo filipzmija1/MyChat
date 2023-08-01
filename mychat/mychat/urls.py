@@ -36,12 +36,14 @@ urlpatterns = [
     path('friend-requests/<uuid:pk>', vchat.FriendRequestAnswer.as_view(), name='friend_request_detail'),
     path('request-delete/<uuid:pk>', vchat.FriendRequestDelete.as_view(), name='friend_request_delete'),
     path('user/<slug:username>/your-rooms', vchat.UserOwnRooms.as_view(), name='logged_user_rooms'),
-    path('delete-message/<int:pk>', vchat.DeleteMessage.as_view(), name='delete_message'),
+    path('delete-message/<uuid:pk>', vchat.DeleteMessage.as_view(), name='delete_message'),
     path('join-room/<uuid:pk>', vchat.JoinRoom.as_view(), name='join_room'),
     path('room-management/<uuid:pk>', vchat.RoomManagement.as_view(), name='room_management'),
     path('room-management/<uuid:pk>/groups', vchat.RoomRanksDisplay.as_view(), name='room_groups_management'),
     path('room-management/<uuid:pk>/groups/<slug:name>', vchat.UserRankDetail.as_view(), name='user_rank_edit'),
     path('delete-user/room/<uuid:pk>/user/<slug:username>', vchat.DeleteUserFromRoom.as_view(), name='delete_user_from_room'),
     path('rank-change/room/<uuid:pk>/user/<slug:username>/group/<slug:name>', vchat.UserRankEdit.as_view(), name='user_rank_change'),
+    path('room/<uuid:pk>/users', vchat.RoomUsersList.as_view(), name='room_users_list'),
+    path('messages/<uuid:pk>', vchat.MessageEdit.as_view(), name='message_edit'),
     
 ]

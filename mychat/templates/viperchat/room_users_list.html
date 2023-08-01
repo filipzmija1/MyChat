@@ -1,0 +1,13 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %}Room users {% endblock %}
+
+{% block content %}
+{% for user in users %}
+
+<li><a href="{% url 'user_detail' user.username %}">{{ user.username }} </a>
+    {% if removers %} 
+        <a href="{% url 'delete_user_from_room' pk=room.id username=user.username %}"><button>Delete from room</button></a> 
+    {% endif %}</li>
+{% endfor %}
+{% endblock %}

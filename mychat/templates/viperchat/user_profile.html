@@ -40,15 +40,21 @@ Friends: <br>{% for friend in user.friends.all %}
                  <a href="{% url 'delete_friend' friend.username %}">Delete friend</a>{% endif %}<br>
         {% endfor %}
 <br>
-{% if chat.exists %}
+{% if chat %}
 {% for message in chat %}
-<li> {{ message.author }} {{ message.date_created }} <br>{{ message.content }}
+<li> {{ message.author }}: {{ message.content }} --------{% if message.date_edited %} Edited: {{ message.date_edited }} {% else %} {{ message.date_created }} {% endif %} | 
+    {% if request.user == message.author %}
+    <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a>
+    {% endif %}
 {% endfor %}
+{% endif %}
+{% if request.user != user %}
 <form method="POST" action="">
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Send">
 </form>
 {% endif %}
+
 
 {% endblock %}

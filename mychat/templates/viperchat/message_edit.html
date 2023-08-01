@@ -1,0 +1,12 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %}Edit message {% endblock %}
+
+{% block content %}
+<h2>Edit message</h2>
+<form action="" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Save changes">
+</form>
+{% endblock %}

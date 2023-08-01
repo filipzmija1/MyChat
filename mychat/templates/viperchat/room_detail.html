@@ -9,14 +9,15 @@
 About room: {{ room.description }}<br>
 Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<br> {% endif %}
 {% if user in room.users.all %}
-Users: {% for user in room.users.all %}
-{{ user.username }}, 
-{% endfor %}
+<a href="{% url 'room_users_list' room.id %}">Users</a>
 <br>
 <h3>Chat:</h3> {% for message in messages %}
-<li> {{ message.author }} {{ message.date_created }} <br>{{ message.content }}
+<li> {{ message.author }}: {{ message.content }} - {{ message.date_created }} {% if message.date_edited %} Edited: {{ message.date_edited }} {% else %} {{ message.date_created }} {% endif %}
+    {% if request.user == message.author %}
+    <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a>
+    {% endif %}
    {% if user in masters or user == message.author or user in moderators %} 
-<a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</li><br>
+| <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</li><br>
 <form action="" method="POST">
     {% csrf_token %}
     {{ form.as_p }}

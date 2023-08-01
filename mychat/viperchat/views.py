@@ -17,6 +17,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.urls import reverse, reverse_lazy
 from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
+from django.utils import timezone
 
 from .models import Room, Notification, FriendRequest, RoomInvite, Message, RoomPermissionSettings
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, RoomPermissionsForm
@@ -175,7 +176,7 @@ class RoomDetail(LoginRequiredMixin, FormMixin, DetailView):
 
     
 class RoomManagement(LoginRequiredMixin, UpdateView):
-    """Moderators delete messages, send invites, delete users in room"""
+    """Here you can set permissions for each group"""
     model = Room
     form_class = RoomManagementForm
     second_form_class = RoomPermissionsForm
@@ -228,6 +229,7 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
     
 
 class RoomRanksDisplay(LoginRequiredMixin, ListView):
+    """Show room groups and users belongs to eachone"""
     model = Group
     context_object_name = 'groups'
     template_name = 'viperchat/room_groups_management.html'
@@ -249,7 +251,40 @@ class RoomRanksDisplay(LoginRequiredMixin, ListView):
         return context
         
 
+class RoomUsersList(LoginRequiredMixin, ListView):
+    """Display room's users and give possibility to delete them from room"""
+    model = User
+    context_object_name = 'users'
+    template_name = 'viperchat/room_users_list.html'
+
+    def get_object(self, *args, **kwargs):
+        return Room.objects.get(id=self.kwargs['pk'])
+    
+    def get_queryset(self):
+        logged_user = self.request.user
+        if logged_user in self.get_object().users.all():
+            return self.get_object().users.all()
+        else:
+            raise PermissionDenied
+        
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        moderators_group = Group.objects.get(name=f'{self.get_object().name}_mods')
+        masters_group = Group.objects.get(name=f'{self.get_object().name}_masters')
+        delete_user_permission = Permission.objects.get(codename='delete_user_from_room')
+        context['room'] = self.get_object()
+        if self.request.user in moderators_group.user_set.all() and delete_user_permission in moderators_group.permissions.all():
+            context['removers'] = moderators_group
+            return context
+        elif self.request.user in masters_group.user_set.all():
+            context['removers'] = masters_group
+            return context
+        else:
+            return context
+        
+
 class UserRankDetail(LoginRequiredMixin, DetailView):
+    """Show which users belongs to which group"""
     model = Room
     template_name = 'viperchat/rank_management.html'
     fields = []
@@ -306,12 +341,13 @@ class DeleteUserFromRoom(LoginRequiredMixin, UpdateView):
             moderators_group.user_set.remove(self.get_object())
             members_group.user_set.remove(self.get_object())
             room.users.remove(self.get_object())
-            return redirect(reverse('room_groups_management', kwargs={'pk': room.id}))
+            return redirect(reverse('room_users_list', kwargs={'pk': room.id}))
         else:
             raise PermissionDenied
         
 
 class UserRankEdit(LoginRequiredMixin, UpdateView):
+    """Here you can edit user's groups"""
     model = Room
     fields = []
 
@@ -379,7 +415,7 @@ class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
         context['friend_request'] = friend_request
         context['friend_request_mirror'] = friend_request_mirror
         context['user_rooms'] = user_rooms
-        if self.request.user in self.get_object().friends.all():
+        if self.request.user in self.get_object().friends.all():    # Display chat
             friend_messages = Message.objects.filter(author=self.get_object(), message_receiver=self.request.user)
             logged_user_messages = Message.objects.filter(author=self.request.user, message_receiver=self.get_object())
             context['chat'] = (friend_messages | logged_user_messages).order_by('date_created')
@@ -396,6 +432,33 @@ class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
         else:
             return redirect(reverse('user_detail', kwargs={'username': self.get_object().username}))
         
+
+class MessageEdit(LoginRequiredMixin, UpdateView):
+    model = Message
+    template_name = 'viperchat/message_edit.html'
+    fields = ['content']
+
+    def get_queryset(self):
+        message_id = self.kwargs['pk']
+        message = Message.objects.get(id=message_id)
+        if message.author != self.request.user:
+            raise PermissionDenied
+        else:
+            return super().get_queryset()
+
+    def form_valid(self, form):
+        form.instance.date_edited = timezone.now()
+        form.save()
+        return redirect(self.get_success_url())
+        
+    def get_success_url(self):
+        message_id = self.kwargs['pk']
+        message = Message.objects.get(id=message_id)
+        if message.room:
+            return reverse('room_detail', kwargs={'pk': message.room.id})
+        else:
+            return reverse('user_detail', kwargs={'username': message.message_receiver.username})
+
 
 class UserProfileEdit(LoginRequiredMixin, UpdateView):
     """This view is destined to change user data"""
