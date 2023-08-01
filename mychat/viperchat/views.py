@@ -249,9 +249,10 @@ class RoomRanksManagement(LoginRequiredMixin, ListView):
         return context
         
 
-class UserRankEdit(LoginRequiredMixin, DetailView):
+class UserRankDetail(LoginRequiredMixin, DetailView):
     model = Room
     template_name = 'viperchat/rank_management.html'
+    fields = []
 
     def get_object(self, *args, **kwargs):
         room_id = self.kwargs['pk']
@@ -267,8 +268,44 @@ class UserRankEdit(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         group_name = self.kwargs['name']
         context['group'] = Group.objects.get(name=group_name)
+        context['room'] = self.get_object()
         return context
     
+
+class DeleteUserFromRoom(LoginRequiredMixin, UpdateView):
+    model = Room
+    fields = []
+
+    def get_object(self):
+        user_username = self.kwargs['username']
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(id=room_id)
+        user_to_delete = User.objects.get(username=user_username)
+        logged_user = self.request.user
+        group_masters = Group.objects.get(name=f'{room.name}_masters')
+        moderators_group = Group.objects.get(name=f'{room.name}_mods')
+        delete_user_permission = Permission.objects.get(codename='delete_user_from_room')
+        if logged_user in group_masters.user_set.all():
+            return user_to_delete
+        elif logged_user in moderators_group.user_set.all() and delete_user_permission in moderators_group.permissions.all():
+            return user_to_delete
+        else:
+            raise PermissionDenied
+
+    def get(self, request, *args, **kwargs):
+        room_id = self.kwargs['pk']
+        room = Room.objects.get(id=room_id)
+        moderators_group = Group.objects.get(name=f'{room.name}_mods')
+        members_group = Group.objects.get(name=f'{room.name}_members')
+        if self.get_object() in room.users.all():
+            if self.get_object() in moderators_group.user_set.all() or self.get_object() in members_group.user_set.all():
+                moderators_group.user_set.remove(self.get_object())
+                members_group.user_set.remove(self.get_object())
+                room.users.remove(self.get_object())
+                return redirect(reverse('room_groups_management', kwargs={'pk': room.id}))
+        else:
+            PermissionDenied
+        
 
 class UserOwnRooms(LoginRequiredMixin, ListView):
     """Display user own rooms"""

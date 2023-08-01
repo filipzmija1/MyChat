@@ -6,7 +6,12 @@
 {% block content %}
 <h2>{{ group.name|split_group_name }}</h2>
 {% for user in group|group_users %}
-    <li>{{ user.username }}<br>
+    <li>{{ user.username }}<br><br>
+            <input type="submit" value="Give Mod rank" name="promote_to_mod">
+            <input type="submit" value="Give Master rank" name="promote_to_master">
+            <input type="submit" value="Give Member rank" name="promote_to_member">
+            <a href="{% url 'delete_user_from_room' pk=room.id username=user.username %}"><button>Delete from group</button></a>
+            <br>
     _________________________________</li>
 {% endfor %}
 {% endblock %}
