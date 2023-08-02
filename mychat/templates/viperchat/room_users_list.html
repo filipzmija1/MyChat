@@ -1,4 +1,5 @@
 {% extends 'viperchat/base.html' %}
+{% load  template_filters %}
 
 {% block title %}Room users {% endblock %}
 
@@ -7,7 +8,13 @@
 
 <li><a href="{% url 'user_detail' user.username %}">{{ user.username }} </a>
     {% if removers %} 
-        <a href="{% url 'delete_user_from_room' pk=room.id username=user.username %}"><button>Delete from room</button></a> 
+        {% for group in groups %}
+            {% if user in group|group_users %}
+            {% else %}
+        <a href="{% url 'user_rank_change' pk=room.id username=user.username name=group.name %}"><button>Give {{ group.name|split_group_name }} rank</button></a>
+            {% endif %}
+        {% endfor %}
+        <a href="{% url 'delete_user_from_room' pk=room.id username=user.username %}"><button>Delete from room</button></a>
     {% endif %}</li>
 {% endfor %}
 {% endblock %}

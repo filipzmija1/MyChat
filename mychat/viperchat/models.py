@@ -24,6 +24,18 @@ class RoomPermissionSettings(models.Model):
     members_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
 
 
+class Server(models.Model):
+    id = models.UUIDField(
+        default=uuid.uuid4,
+        unique=True,
+        primary_key=True,
+        editable=False
+    )
+    name = models.CharField(max_length=155, unique=True)
+    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='server_creator')
+    users = models.ManyToManyField(User, blank=True)
+
+
 class Room(models.Model):
     id = models.UUIDField(
         default=uuid.uuid4,
@@ -37,6 +49,7 @@ class Room(models.Model):
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator')
     is_private = models.BooleanField(default=False)
     permission_settings = models.OneToOneField(RoomPermissionSettings, on_delete=models.CASCADE, null=True, blank=True)
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
 
     class Meta:
         permissions = [

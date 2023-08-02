@@ -82,11 +82,13 @@ class DeleteMessage(LoginRequiredMixin, DeleteView):
         message_id = self.kwargs['pk']
         message = Message.objects.get(id=message_id)
         room = message.room
+        logged_user = self.request.user
+        if logged_user == message.author:
+            return message
         moderators_group = Group.objects.get(name=f'{room.name}_mods')
         room_masters = Group.objects.get(name=f'{room.name}_masters')
-        logged_user = self.request.user
         delete_message_permission = Permission.objects.get(codename='delete_message_from_room')
-        if logged_user in room_masters.user_set.all() or logged_user == message.author:     # Check if user belongs to room_masters group
+        if logged_user in room_masters.user_set.all():     # Check if user belongs to room_masters group
             return message
         elif delete_message_permission in moderators_group.permissions.all() and logged_user in moderators_group.user_set.all():    # Check if delete permission and logged user are in moderate group
             return message
@@ -95,8 +97,11 @@ class DeleteMessage(LoginRequiredMixin, DeleteView):
         
     def get_success_url(self):
         room = self.get_object().room
-        return reverse('room_detail', kwargs={'pk': room.pk})
-
+        if room:
+            return reverse('room_detail', kwargs={'pk': room.pk})
+        else:
+            return reverse('user_detail', kwargs={'username': self.get_object().message_receiver})
+        
 
 class RoomList(ListView):
     """Shows every room"""
@@ -277,6 +282,7 @@ class RoomUsersList(LoginRequiredMixin, ListView):
             context['removers'] = moderators_group
             return context
         elif self.request.user in masters_group.user_set.all():
+            context['groups'] = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
             context['removers'] = masters_group
             return context
         else:
@@ -452,6 +458,7 @@ class MessageEdit(LoginRequiredMixin, UpdateView):
         return redirect(self.get_success_url())
         
     def get_success_url(self):
+        """Success url depends on if chat is in room or between two users"""
         message_id = self.kwargs['pk']
         message = Message.objects.get(id=message_id)
         if message.room:
