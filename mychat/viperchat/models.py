@@ -13,7 +13,7 @@ class User(AbstractUser):
         ]
 
 
-class RoomPermissionSettings(models.Model):
+class ServerPermissionSettings(models.Model):
     CHOICES = (
         ('Allowed', 'Allowed'),
         ('Forbidden', 'Forbidden'),
@@ -34,6 +34,7 @@ class Server(models.Model):
     name = models.CharField(max_length=155, unique=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='server_creator')
     users = models.ManyToManyField(User, blank=True)
+    permission_settings = models.OneToOneField(ServerPermissionSettings, on_delete=models.CASCADE, null=True, blank=True)
 
 
 class Room(models.Model):
@@ -48,7 +49,6 @@ class Room(models.Model):
     users = models.ManyToManyField(User, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator')
     is_private = models.BooleanField(default=False)
-    permission_settings = models.OneToOneField(RoomPermissionSettings, on_delete=models.CASCADE, null=True, blank=True)
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
 
     class Meta:

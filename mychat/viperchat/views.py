@@ -19,8 +19,8 @@ from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
-from .models import Room, Notification, FriendRequest, RoomInvite, Message, RoomPermissionSettings
-from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, RoomPermissionsForm
+from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings
+from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm
 from .permissions import *
 
 
@@ -46,7 +46,7 @@ class CreateRoom(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.creator = self.request.user
-        permission_settings = RoomPermissionSettings.objects.create()
+        permission_settings = ServerPermissionSettings.objects.create()
         form.instance.permission_settings = permission_settings
         room = form.save()
         room.users.add(self.request.user)
@@ -184,7 +184,7 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
     """Here you can set permissions for each group"""
     model = Room
     form_class = RoomManagementForm
-    second_form_class = RoomPermissionsForm
+    second_form_class = ServerPermissionsForm
     template_name = 'viperchat/room_management.html'
 
     def get_object(self, *args, **kwargs):
@@ -206,7 +206,7 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
         return context
         
     def form_valid(self, form):
-        permission_settings_form = RoomPermissionsForm(self.request.POST)
+        permission_settings_form = ServerPermissionsForm(self.request.POST)
         permission_settings = self.get_object().permission_settings
         if form.is_valid() and permission_settings_form.is_valid():
             moderator_delete_messages_permission = permission_settings_form.cleaned_data['moderators_delete_messages']
