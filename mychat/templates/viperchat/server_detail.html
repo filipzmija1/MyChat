@@ -5,7 +5,12 @@
 {% block content %}
 <h2>{{ server.name }} </h2>
 {{ server.description }}<br>
+Creator: {{ server.creator }} <br>
 {% for user in server.users.all %}
 <li>{{ user.username }} </li>
+{% endfor %}<br>
+<a href="{% url 'create_room' server.id %}"><button>Create room</button></a><br>
+Rooms: {% for room in server.room_set.all %}
+{{ room.name }}, 
 {% endfor %}
 {% endblock %}

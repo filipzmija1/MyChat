@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import get_user_model
 
-from .models import Message, Room, RoomInvite
+from .models import Message, Room, RoomInvite, Server
 
 User = get_user_model()
 
@@ -69,6 +69,30 @@ def add_display_user_profile_permission(group):
     permission = Permission.objects.get(codename='display_user_profile', content_type=display_user_data_content_type)
     return group.permissions.add(permission)
 
+
+def add_create_room_in_server_permission(group):
+    create_room_in_server_content_type = ContentType.objects.get_for_model(Server)
+    permission = Permission.objects.get(codename='create_room_in_server', content_type=create_room_in_server_content_type)
+    return group.permissions.add(permission)
+
+
+def remove_create_room_in_server_permission(group):
+    create_room_in_server_content_type = ContentType.objects.get_for_model(Server)
+    permission = Permission.objects.get(codename='create_room_in_server', content_type=create_room_in_server_content_type)
+    return group.permissions.remove(permission)
+
+
+def add_send_messages_in_server_permission(group):
+    send_messages_in_server_content_type = ContentType.objects.get_for_model(Server)
+    permission = Permission.objects.get(codename='send_messages_in_server', content_type=send_messages_in_server_content_type)
+    return group.permissions.add(permission)
+
+
+def remove_send_messages_in_server_permission(group):
+    send_messages_in_server_content_type = ContentType.objects.get_for_model(Server)
+    permission = Permission.objects.get(codename='send_messages_in_server', content_type=send_messages_in_server_content_type)
+    return group.permissions.remove(permission)
+
 """-----------------------------------------------------------------------------------"""
 
 def set_permission(permission, group, action_true, action_false):
@@ -78,3 +102,27 @@ def set_permission(permission, group, action_true, action_false):
     elif permission == 'Forbidden':
         action_false(group)
         group.save()
+
+
+def initial_server_permissions(owners, masters, moderators, members):
+    """Set initial permissions for groups in server"""
+    #   Owners permissions
+    add_delete_message_permission(owners)
+    add_delete_user_from_group_permission(owners)
+    add_send_invitation_permission(owners)
+    add_create_room_in_server_permission(owners)
+    add_send_messages_in_server_permission(owners)
+    #   Masters permissions
+    add_delete_message_permission(masters)
+    add_delete_user_from_group_permission(masters)
+    add_send_invitation_permission(masters)
+    add_send_messages_in_server_permission(masters)
+    #   Moderators permissions
+    add_delete_message_permission(moderators)
+    add_delete_user_from_group_permission(moderators)
+    add_send_invitation_permission(moderators)
+    add_send_messages_in_server_permission(moderators)
+    #   Members permissions
+    add_send_messages_in_server_permission(members)
+    add_send_invitation_permission(members)
+

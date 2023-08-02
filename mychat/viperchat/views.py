@@ -70,7 +70,6 @@ class GiveInitialPermissions(LoginRequiredMixin, CreateView):
     def get(self, request, *args, **kwargs):
         server = self.get_object()
         room = Room.objects.create(name='general', server=server)
-        room.users.add(self.request.user)
         # Create server groups
         server_owners, created = Group.objects.get_or_create(name=f'{server.name}_owners')
         server_masters, is_created = Group.objects.get_or_create(name=f'{server.name}_masters')
@@ -78,20 +77,10 @@ class GiveInitialPermissions(LoginRequiredMixin, CreateView):
         server_members, created = Group.objects.get_or_create(name=f'{server.name}_members')
         
         server_owners.user_set.add(self.request.user)
-        # Give initial permissions to moderators
-        add_delete_message_permission(server_moderators)
-        add_delete_user_from_group_permission(server_moderators)
-        add_send_invitation_permission(server_moderators)
-        # Give initial permissions to members   
-        add_send_invitation_permission(server_members)
-        # Give initial permissions to masters
-        add_delete_message_permission(server_masters)
-        add_delete_user_from_group_permission(server_masters)
-        add_send_invitation_permission(server_masters)
-        # Give initial permissions to owners
-        add_delete_message_permission(server_owners)
-        add_delete_user_from_group_permission(server_owners)
-        add_send_invitation_permission(server_owners)
+
+        # Give initial permissions to server groups
+        initial_server_permissions(server_owners, server_masters, server_moderators, server_members)
+
         return redirect(reverse('server_detail', kwargs={'pk': server.pk}))
 
 
@@ -113,34 +102,23 @@ class CreateRoom(LoginRequiredMixin, CreateView):
     model = Room
     fields = ['name', 'description', 'is_private']
 
+    def get_object(self):
+        server_id = self.kwargs['pk']
+        server = Server.objects.get(id=server_id)
+        server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
+        create_permission = Permission.objects.get(codename='create_room_in_server')
+        for group in server_groups:
+            if self.request.user in group.user_set.all() and create_permission in group.permissions.all():
+                return server
+        raise PermissionDenied
+
     def form_valid(self, form):
-        form.instance.creator = self.request.user
-        permission_settings = ServerPermissionSettings.objects.create()
-        form.instance.permission_settings = permission_settings
-        room = form.save()
-        room.users.add(self.request.user)
-
-        room_masters, is_created = Group.objects.get_or_create(name=f'{room.name}_masters') # Create masters group
-        moderators_group, status = Group.objects.get_or_create(name=f'{room.name}_mods')  # Create moderator group
-        members_group, created = Group.objects.get_or_create(name=f'{room.name}_members')    # Create members group
-        
-
-        room_masters.user_set.add(self.request.user)
-
-        add_delete_message_permission(moderators_group)
-        add_delete_user_from_group_permission(moderators_group)
-        add_send_invitation_permission(moderators_group)
-
-        add_send_invitation_permission(members_group)
-
-        add_delete_message_permission(room_masters)
-        add_delete_user_from_group_permission(room_masters)
-        add_send_invitation_permission(room_masters)
-        
+        form.instance.server = self.get_object()
+        form.save()
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse('room_detail', kwargs={'pk': self.object.pk})
+        return reverse('server_detail', kwargs={'pk': self.get_object().pk})
         
 
 class DeleteMessage(LoginRequiredMixin, DeleteView):

@@ -18,10 +18,21 @@ class ServerPermissionSettings(models.Model):
         ('Allowed', 'Allowed'),
         ('Forbidden', 'Forbidden'),
     )
+    masters_create_room = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    masters_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    masters_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    masters_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    masters_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    moderators_create_room = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    moderators_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    members_create_room = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    members_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    members_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     members_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    members_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
 
 
 class Server(models.Model):
@@ -38,6 +49,12 @@ class Server(models.Model):
     permission_settings = models.OneToOneField(ServerPermissionSettings, on_delete=models.CASCADE, null=True, blank=True)
     is_private = models.BooleanField(default=True)
 
+    class Meta:
+        permissions = [
+            ('create_room_in_server', 'Can create room in server'),
+            ('send_messages_in_server', 'Can send messages in server')
+        ]
+
     def __str__(self):
         return self.name
 
@@ -51,7 +68,6 @@ class Room(models.Model):
     )
     name = models.CharField(max_length=155)
     description = models.TextField(blank=True, null=True)
-    users = models.ManyToManyField(User, blank=True)
     is_private = models.BooleanField(default=False)
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
 

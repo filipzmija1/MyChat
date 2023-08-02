@@ -21,7 +21,7 @@ import viperchat.views as vchat
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', vchat.HomePage.as_view(), name='home'),
-    path('create-room/', vchat.CreateRoom.as_view(), name='create_room'),
+    path('server/<uuid:pk>/create-room/', vchat.CreateRoom.as_view(), name='create_room'),
     path('accounts/', include('allauth.urls')),
     path('rooms/', vchat.RoomList.as_view(), name='rooms'),
     path('rooms/<uuid:pk>', vchat.RoomDetail.as_view(), name='room_detail'),
