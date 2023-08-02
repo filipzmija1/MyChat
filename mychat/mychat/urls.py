@@ -45,5 +45,8 @@ urlpatterns = [
     path('rank-change/room/<uuid:pk>/user/<slug:username>/group/<slug:name>', vchat.UserRankEdit.as_view(), name='user_rank_change'),
     path('room/<uuid:pk>/users', vchat.RoomUsersList.as_view(), name='room_users_list'),
     path('messages/<uuid:pk>', vchat.MessageEdit.as_view(), name='message_edit'),
-    
+    path('create-server/', vchat.CreateServer.as_view(), name='create_server'),
+    path('server_details/<uuid:pk>', vchat.ServerDetails.as_view(), name='server_detail'),
+    path('server-initial/<uuid:pk>', vchat.GiveInitialPermissions.as_view(), name='server_initial'),
+
 ]

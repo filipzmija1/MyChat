@@ -1,0 +1,11 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %}Server details {% endblock %}
+
+{% block content %}
+<h2>{{ server.name }} </h2>
+{{ server.description }}<br>
+{% for user in server.users.all %}
+<li>{{ user.username }} </li>
+{% endfor %}
+{% endblock %}

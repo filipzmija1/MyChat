@@ -32,9 +32,14 @@ class Server(models.Model):
         editable=False
     )
     name = models.CharField(max_length=155, unique=True)
+    description = models.TextField(null=True, blank=True)
     creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='server_creator')
     users = models.ManyToManyField(User, blank=True)
     permission_settings = models.OneToOneField(ServerPermissionSettings, on_delete=models.CASCADE, null=True, blank=True)
+    is_private = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
 
 
 class Room(models.Model):
@@ -44,10 +49,9 @@ class Room(models.Model):
         primary_key=True,
         editable=False
     )
-    name = models.CharField(max_length=155, unique=True)
+    name = models.CharField(max_length=155)
     description = models.TextField(blank=True, null=True)
     users = models.ManyToManyField(User, blank=True)
-    creator = models.ForeignKey(User, on_delete=models.CASCADE, related_name='creator')
     is_private = models.BooleanField(default=False)
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
 

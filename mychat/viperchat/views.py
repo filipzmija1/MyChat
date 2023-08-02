@@ -19,7 +19,7 @@ from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
-from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings
+from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings, Server
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm
 from .permissions import *
 
@@ -37,6 +37,75 @@ class HomePage(View):
         }
         return render(request, self.template_name, context)
     
+
+class CreateServer(LoginRequiredMixin, CreateView):
+    model = Server
+    fields = ['name', 'description']
+
+    def form_valid(self, form):
+        form.instance.creator = self.request.user
+        permission_settings = ServerPermissionSettings.objects.create()
+        form.instance.permission_settings = permission_settings
+        server = form.save()
+        server.users.add(self.request.user)
+        return super().form_valid(form)
+    
+    def get_success_url(self):
+        return reverse('server_initial', kwargs={'pk': self.object.pk})
+    
+
+class GiveInitialPermissions(LoginRequiredMixin, CreateView):
+    """Creates one room(general), server groups and gives them default permissions"""
+    model = Room
+    fields = []
+
+    def get_object(self):
+        server_id = self.kwargs['pk']
+        server = Server.objects.get(id=server_id)
+        if self.request.user == server.creator:
+            return server
+        else:
+            raise PermissionDenied
+    
+    def get(self, request, *args, **kwargs):
+        server = self.get_object()
+        room = Room.objects.create(name='general', server=server)
+        room.users.add(self.request.user)
+        # Create server groups
+        server_owners, created = Group.objects.get_or_create(name=f'{server.name}_owners')
+        server_masters, is_created = Group.objects.get_or_create(name=f'{server.name}_masters')
+        server_moderators, status = Group.objects.get_or_create(name=f'{server.name}_moderators')  
+        server_members, created = Group.objects.get_or_create(name=f'{server.name}_members')
+        
+        server_owners.user_set.add(self.request.user)
+        # Give initial permissions to moderators
+        add_delete_message_permission(server_moderators)
+        add_delete_user_from_group_permission(server_moderators)
+        add_send_invitation_permission(server_moderators)
+        # Give initial permissions to members   
+        add_send_invitation_permission(server_members)
+        # Give initial permissions to masters
+        add_delete_message_permission(server_masters)
+        add_delete_user_from_group_permission(server_masters)
+        add_send_invitation_permission(server_masters)
+        # Give initial permissions to owners
+        add_delete_message_permission(server_owners)
+        add_delete_user_from_group_permission(server_owners)
+        add_send_invitation_permission(server_owners)
+        return redirect(reverse('server_detail', kwargs={'pk': server.pk}))
+
+
+class ServerDetails(LoginRequiredMixin, DetailView):
+    model = Server
+    context_object_name = 'server'
+    template_name = 'viperchat/server_detail.html'
+
+    def get_queryset(self):
+        server_id = self.kwargs['pk']
+        server = Server.objects.get(id=server_id)
+        if self.request.user in server.users.all():
+            return super().get_queryset()
+
 
 class CreateRoom(LoginRequiredMixin, CreateView):
     """Create room and groups with permissions. Creates 3 groups (Room Masters, Members and Moderators). 
