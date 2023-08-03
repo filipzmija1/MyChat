@@ -8,7 +8,6 @@
 {% endif %}
 About room: {{ room.description }}<br>
 Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<br> {% endif %}
-{% if user in room.users.all %}
 <a href="{% url 'room_users_list' room.id %}">Users</a>
 <br>
 <h3>Chat:</h3> {% for message in messages %}
@@ -16,15 +15,12 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
     {% if request.user == message.author %}
     <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a>
     {% endif %}
-   {% if user in masters or user == message.author or user in moderators %} 
+   {% if request.user in deleters or request.user == message.author %} 
 | <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</li><br>
 <form action="" method="POST">
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Send">
 </form>
-{% else %}
-For more details: <a href="{% url 'join_room' room.pk %}">Join this room</a>
 
-{% endif %}
 {% endblock %}

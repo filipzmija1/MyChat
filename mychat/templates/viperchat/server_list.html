@@ -1,0 +1,8 @@
+{% extends 'viperchat/base.html' %}
+
+{% block content %}
+<h2>Public servers</h2>
+{% for server in server_list %}
+<li><a href="{% url 'server_detail' server.id %}">{{ server.name }}</a> </li>
+{% endfor %}
+{% endblock %}

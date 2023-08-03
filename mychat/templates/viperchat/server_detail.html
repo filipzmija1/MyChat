@@ -1,16 +1,28 @@
 {% extends 'viperchat/base.html' %}
-
+{% load template_filters %}
 {% block title %}Server details {% endblock %}
 
 {% block content %}
 <h2>{{ server.name }} </h2>
-{{ server.description }}<br>
-Creator: {{ server.creator }} <br>
-{% for user in server.users.all %}
-<li>{{ user.username }} </li>
-{% endfor %}<br>
+{% for group in server_groups %}
+{% if request.user in group|group_users and create_permission in group.permissions.all %}
 <a href="{% url 'create_room' server.id %}"><button>Create room</button></a><br>
-Rooms: {% for room in server.room_set.all %}
-{{ room.name }}, 
+{% endif %}
 {% endfor %}
+
+About server: {{ server.description }}<br>
+{% if request.user in server.users.all %}
+Creator: {{ server.creator }} <br>
+Users: 
+{% for user in server.users.all %}
+{{ user.username }} 
+{% endfor %}<br>
+
+Rooms: {% for room in server.room_set.all %}
+<a href="{% url 'room_detail' server_id=server.id pk=room.id %}">{{ room.name }}</a>, 
+{% endfor %}
+<br>
+{% else %}
+<a href="{% url 'join_server' server.id %}">Join server for more details</a>
+{% endif %}
 {% endblock %}
