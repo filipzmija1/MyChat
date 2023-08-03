@@ -73,7 +73,7 @@ class Room(models.Model):
 
     class Meta:
         permissions = [
-            ("delete_user_from_room", "Can delete user from room"),
+            ("delete_user_from_server", "Can delete user from server"),
             ("display_room_data", "Can see room details"),
         ]
 

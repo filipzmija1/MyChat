@@ -1,6 +1,6 @@
-{% extends 'viperchat/base.html' %}
+{% extends 'viperchat/server_detail.html' %}
 
-{% block content %}
+{% block room %}
 <h2>{{ room.name }}</h2>
 <!-- <a href="">Invite friends</a><br> -->
 {% if user in masters %}
@@ -8,7 +8,6 @@
 {% endif %}
 About room: {{ room.description }}<br>
 Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<br> {% endif %}
-<a href="{% url 'room_users_list' room.id %}">Users</a>
 <br>
 <h3>Chat:</h3> {% for message in messages %}
 <li> {{ message.author }}: {{ message.content }} - {{ message.date_created }} {% if message.date_edited %} Edited: {{ message.date_edited }} {% else %} {{ message.date_created }} {% endif %}

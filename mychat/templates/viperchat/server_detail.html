@@ -13,16 +13,17 @@
 About server: {{ server.description }}<br>
 {% if request.user in server.users.all %}
 Creator: {{ server.creator }} <br>
-Users: 
-{% for user in server.users.all %}
-{{ user.username }} 
-{% endfor %}<br>
+<a href="{% url 'server_users_list' server.id %}">Users</a>
+<br>
 
 Rooms: {% for room in server.room_set.all %}
 <a href="{% url 'room_detail' server_id=server.id pk=room.id %}">{{ room.name }}</a>, 
 {% endfor %}
 <br>
 {% else %}
-<a href="{% url 'join_server' server.id %}">Join server for more details</a>
+<a href="{% url 'join_server' server.pk %}">Join server for more details</a>
 {% endif %}
+{% block room %}
+
+{% endblock %}
 {% endblock %}

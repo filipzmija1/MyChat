@@ -232,6 +232,7 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
         server_groups = Group.objects.filter(name__startswith=f'{server.name}_')    # Get all server groups
         context['messages'] = Message.objects.filter(room=self.get_object())
         context['form'] = SendMessageForm()
+        context['server'] = self.get_object().server
         for group in server_groups:
             if logged_user in group.user_set.all() and delete_message_permission in group.permissions.all():
                 context["deleters"] = group.user_set.all()
@@ -239,16 +240,14 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
     
     def post(self, request, *args, **kwargs):
         form = self.get_form()
-        server_id = self.kwargs['server_id']
-        server = Server.objects.get(id=server_id)
         if form.is_valid():
             room = self.get_object()
             author = self.request.user
             message = form.cleaned_data['message']
             Message.objects.create(room=room, author=author, content=message)
-            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': server.id}))
+            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
         else:
-            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': server.id}))
+            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
 
     
 class RoomManagement(LoginRequiredMixin, UpdateView):
@@ -327,14 +326,14 @@ class RoomRanksDisplay(LoginRequiredMixin, ListView):
         return context
         
 
-class RoomUsersList(LoginRequiredMixin, ListView):
+class ServerUsersList(LoginRequiredMixin, ListView):
     """Display room's users and give possibility to delete them from room"""
     model = User
     context_object_name = 'users'
-    template_name = 'viperchat/room_users_list.html'
+    template_name = 'viperchat/server_users_list.html'
 
     def get_object(self, *args, **kwargs):
-        return Room.objects.get(id=self.kwargs['pk'])
+        return Server.objects.get(id=self.kwargs['pk'])
     
     def get_queryset(self):
         logged_user = self.request.user
@@ -345,19 +344,13 @@ class RoomUsersList(LoginRequiredMixin, ListView):
         
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        moderators_group = Group.objects.get(name=f'{self.get_object().name}_mods')
-        masters_group = Group.objects.get(name=f'{self.get_object().name}_masters')
-        delete_user_permission = Permission.objects.get(codename='delete_user_from_room')
-        context['room'] = self.get_object()
-        if self.request.user in moderators_group.user_set.all() and delete_user_permission in moderators_group.permissions.all():
-            context['removers'] = moderators_group
-            return context
-        elif self.request.user in masters_group.user_set.all():
-            context['groups'] = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
-            context['removers'] = masters_group
-            return context
-        else:
-            return context
+        groups = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
+        permission = Permission.objects.get(codename='delete_user_from_server')
+        for group in groups:
+            if self.request.user in group.user_set.all() and permission in group.permissions.all():
+                context['remover'] = group.user_set.all()
+        context['server'] = self.get_object()
+        return context
         
 
 class UserRankDetail(LoginRequiredMixin, DetailView):
@@ -385,42 +378,48 @@ class UserRankDetail(LoginRequiredMixin, DetailView):
         return context
     
 
-class DeleteUserFromRoom(LoginRequiredMixin, UpdateView):
+class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """Deletes user from room and takes permissions"""
-    model = Room
+    model = Server
     fields = []
+
+    def test_func(self):
+        server_id = self.kwargs['server_id']
+        server = Server.objects.get(id=server_id)
+        server_groups = Group.objects.filter(name=f'{server.name}_')
+        delete_permission = Permission.objects.get(codename='delete_user_from_server')
+        for group in server_groups:
+            if self.request.user in group.user_set.all() and delete_permission in group.permissions.all():
+                return True
+        raise PermissionDenied
 
     def get_object(self):
         user_username = self.kwargs['username']
-        room_id = self.kwargs['pk']
-        room = Room.objects.get(id=room_id)
         user_to_delete = User.objects.get(username=user_username)
-        logged_user = self.request.user
-        group_masters = Group.objects.get(name=f'{room.name}_masters')
-        moderators_group = Group.objects.get(name=f'{room.name}_mods')
-        delete_user_permission = Permission.objects.get(codename='delete_user_from_room')
-        if logged_user in group_masters.user_set.all():
-            return user_to_delete
-        elif logged_user in moderators_group.user_set.all() and delete_user_permission in moderators_group.permissions.all():
-            return user_to_delete
-        else:
-            raise PermissionDenied
+        return user_to_delete
 
     def get(self, request, *args, **kwargs):
-        room_id = self.kwargs['pk']
-        room = Room.objects.get(id=room_id)
-        moderators_group = Group.objects.get(name=f'{room.name}_mods')
-        members_group = Group.objects.get(name=f'{room.name}_members')
-        masters_group = Group.objects.get(name=f'{room.name}_masters')
-        if self.get_object() in masters_group.user_set.all():
+        server_id = self.kwargs['pk']
+        server = Server.objects.get(id=server_id)
+        logged_user = self.request.user
+        user_to_delete = self.get_object()
+        masters_group = Group.objects.get(name=f'{server.name}_masters')
+        moderators_group = Group.objects.get(name=f'{server.name}_moderators')
+        owners_group = Group.objects.get(name=f'{server.name}_owners')
+        members_group = Group.objects.get(name=f'{server.name}_members')
+        #   Check all statements if logged user can delete
+        if user_to_delete in owners_group.user_set.all() or \
+        user_to_delete in masters_group.user_set.all() and logged_user in masters_group.user_set.all() or \
+        user_to_delete in moderators_group.user_set.all() and logged_user in moderators_group.user_set.all() or \
+        user_to_delete in masters_group.user_set.all() and logged_user in moderators_group.user_set.all():
             raise PermissionDenied
-        if self.get_object() in room.users.all():
-            moderators_group.user_set.remove(self.get_object())
-            members_group.user_set.remove(self.get_object())
-            room.users.remove(self.get_object())
-            return redirect(reverse('room_users_list', kwargs={'pk': room.id}))
         else:
-            raise PermissionDenied
+        #   Delete from any group in server
+            server.users.remove(user_to_delete)
+            masters_group.user_set.remove(user_to_delete)
+            moderators_group.ser_set.remove(user_to_delete)
+            members_group.user_set.remove(user_to_delete)
+            return redirect(reverse('server_users_list', kwargs={'pk': server_id}))
         
 
 class UserRankEdit(LoginRequiredMixin, UpdateView):
