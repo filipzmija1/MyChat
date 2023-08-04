@@ -2,7 +2,7 @@ from typing import Any, Dict, Optional
 from django.db import models
 from django.db.models import Q
 from django.db.models.query import QuerySet
-from django.forms.models import BaseModelForm
+from django.forms.models import BaseModelForm, model_to_dict
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import render, redirect
 from django.views import View
@@ -22,7 +22,8 @@ from django.utils import timezone
 from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings, Server
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm, ServerEditForm
 from .permissions import *
-from .utils import check_if_logged_user_can_delete_user
+from .utils import check_if_logged_user_can_delete_user, set_masters_permissions, set_permission, initial_server_permissions, \
+            set_moderators_permissions, set_members_permissions
 
 
 User = get_user_model()
@@ -116,7 +117,7 @@ class ServerDetails(LoginRequiredMixin, DetailView):
 
 class CreateRoom(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Room
-    fields = ['name', 'description', 'is_private']
+    fields = ['name', 'description']
 
     def test_func(self):
         server_id = self.kwargs['pk']
@@ -270,8 +271,9 @@ class ServerEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 
 class ServerGroupsManagement(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    model = Server
-    template_name = 'viperchat/server_groups_management'
+    model = ServerPermissionSettings
+    template_name = 'viperchat/server_groups_management.html'
+    form_class = ServerPermissionsForm
 
     def test_func(self):
         server_id = self.kwargs['pk']
@@ -281,9 +283,41 @@ class ServerGroupsManagement(LoginRequiredMixin, UserPassesTestMixin, UpdateView
             return True
         else:
             raise PermissionDenied
-        
     
+    def get_object(self):
+        server = Server.objects.get(id=self.kwargs['pk'])
+        permission_settings = server.permission_settings
+        return permission_settings
+    
+    def get_success_url(self):
+        #   Redirects to URL which change permissions
+        return reverse('permissions_change', kwargs={'pk': self.kwargs['pk']})
+        
 
+class ServerPermissionChange(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Group
+    fields = []
+
+    def test_func(self):
+        server_id = self.kwargs['pk']
+        server = Server.objects.get(id=server_id)
+        owners_group = Group.objects.get(name=f'{server.name}_owners')
+        if self.request.user in owners_group.user_set.all():
+            return True
+        else:
+            raise PermissionDenied
+    
+    def get_object(self):
+        server = Server.objects.get(id=self.kwargs['pk'])
+        return server
+    
+    def get(self, *args, **kwargs):
+        #   Set groups permissions functions are in utils.py file
+        set_masters_permissions(self.get_object())
+        set_moderators_permissions(self.get_object())
+        set_members_permissions(self.get_object())
+        return redirect(reverse('server_detail', kwargs={'pk': self.get_object().id}))
+        
 
 # class RoomManagement(LoginRequiredMixin, UpdateView):
 #     """Here you can set permissions for each group"""

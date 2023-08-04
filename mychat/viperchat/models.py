@@ -18,21 +18,26 @@ class ServerPermissionSettings(models.Model):
         ('Allowed', 'Allowed'),
         ('Forbidden', 'Forbidden'),
     )
+    #   Masters permissions
     masters_create_room = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    masters_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    masters_send_invitation_to_group = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    moderators_create_room = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    masters_can_see_private_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    #   Moderators permissions
+    moderators_create_room = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     moderators_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    moderators_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    moderators_send_invitation_to_group = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    members_create_room = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    members_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    members_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    members_send_invitation = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    moderators_can_see_private_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    #   Members permissions
+    members_create_room = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    members_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    members_send_invitation_to_group = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     members_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    members_can_see_private_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
 
 
 class Server(models.Model):
@@ -78,7 +83,7 @@ class Room(models.Model):
     class Meta:
         permissions = [
             ("delete_user_from_server", "Can delete user from server"),
-            ("display_room_data", "Can see room details"),
+            ("display_private_room_data", "Can see private room details"),
         ]
 
     def __str__(self):

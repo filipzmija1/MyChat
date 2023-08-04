@@ -49,5 +49,6 @@ urlpatterns = [
     path('server-initial/<uuid:pk>', vchat.GiveInitialPermissions.as_view(), name='server_initial'),
     path('server-edit/<uuid:pk>', vchat.ServerEdit.as_view(), name='server_edit'),
     path('server-groups/management/<uuid:pk>', vchat.ServerGroupsManagement.as_view(), name='server_groups_management'),
+    path('server-groups/management/change/<uuid:pk>', vchat.ServerPermissionChange.as_view(), name='permissions_change'),
 
 ]

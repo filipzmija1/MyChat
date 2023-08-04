@@ -123,12 +123,12 @@ def add_edit_permissions_in_server(group):
 
 """-----------------------------------------------------------------------------------"""
 
-def set_permission(permission, group, action_true, action_false):
-    if permission == 'Allowed':
-        action_true(group)
+def set_permission(permission_settings_model_value, group, add_permission_function, remove_permission_function):
+    if permission_settings_model_value == 'Allowed':
+        add_permission_function(group)
         group.save()
-    elif permission == 'Forbidden':
-        action_false(group)
+    elif permission_settings_model_value == 'Forbidden':
+        remove_permission_function(group)
         group.save()
 
 
