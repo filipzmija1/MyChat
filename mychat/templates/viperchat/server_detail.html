@@ -6,7 +6,10 @@
 <h2>{{ server.name }} </h2>
 {% for group in server_groups %}
 {% if request.user in group|group_users and create_permission in group.permissions.all %}
-<a href="{% url 'create_room' server.id %}"><button>Create room</button></a><br>
+<a href="{% url 'create_room' server.id %}"><button>Create room</button></a> | 
+<a href="{% url 'server_edit' server.id %}"><button>Change server info</button></a> | 
+<a href="{% url 'server_groups_management' server.id %}"><button>Manage permissions</button></a>
+<br>
 {% endif %}
 {% endfor %}
 

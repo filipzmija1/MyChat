@@ -20,7 +20,7 @@ from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
 from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings, Server
-from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm
+from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm, ServerEditForm
 from .permissions import *
 from .utils import check_if_logged_user_can_delete_user
 
@@ -250,57 +250,91 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
         else:
             return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
 
-    
-class RoomManagement(LoginRequiredMixin, UpdateView):
-    """Here you can set permissions for each group"""
-    model = Room
-    form_class = RoomManagementForm
-    second_form_class = ServerPermissionsForm
-    template_name = 'viperchat/room_management.html'
 
-    def get_object(self, *args, **kwargs):
-        room_id = self.kwargs['pk']
-        room = Room.objects.get(id=room_id)
-        room_masters = Group.objects.get(name=f'{room.name}_masters')
-        if self.request.user in room_masters.user_set.all():
-            return room
+class ServerEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Server
+    form_class = ServerEditForm
+    template_name = 'viperchat/server_edit.html'
+
+    def test_func(self):
+        server_id = self.kwargs['pk']
+        server = Server.objects.get(id=server_id)
+        owners_group = Group.objects.get(name=f'{server.name}_owners')
+        if self.request.user in owners_group.user_set.all():
+            return True
+        else: 
+            raise PermissionDenied
+        
+    def get_success_url(self):
+        return reverse('server_detail', kwargs={'pk': self.object.pk})
+
+
+class ServerGroupsManagement(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Server
+    template_name = 'viperchat/server_groups_management'
+
+    def test_func(self):
+        server_id = self.kwargs['pk']
+        server = Server.objects.get(id=server_id)
+        owners_group = Group.objects.get(name=f'{server.name}_owners')
+        if self.request.user in owners_group.user_set.all():
+            return True
         else:
             raise PermissionDenied
         
-    def get_context_data(self, *args, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['room'] = self.get_object()
-        if 'form' not in context:
-            context['form'] = self.form_class(instance=self.get_object())
-        if 'second_form' not in context:
-            context['second_form'] = self.second_form_class(instance=self.get_object().permission_settings)
-        return context
-        
-    def form_valid(self, form):
-        permission_settings_form = ServerPermissionsForm(self.request.POST)
-        permission_settings = self.get_object().permission_settings
-        if form.is_valid() and permission_settings_form.is_valid():
-            moderator_delete_messages_permission = permission_settings_form.cleaned_data['moderators_delete_messages']
-            moderator_delete_user_permission = permission_settings_form.cleaned_data['moderators_delete_user']
-            moderators_send_invite_permission = permission_settings_form.cleaned_data['moderators_send_invitation']
-            members_send_invite_permission = permission_settings_form.cleaned_data['members_send_invitation']
-            #   Get groups
-            moderator_group = Group.objects.get(name=f'{self.get_object().name}_mods')
-            member_group = Group.objects.get(name=f'{self.get_object().name}_members')
-        #   set moderator permissions
-        set_permission(moderator_delete_messages_permission, moderator_group, add_delete_message_permission, remove_delete_message_permission)
-        set_permission(moderators_send_invite_permission, moderator_group, add_send_invitation_permission, remove_send_invitation_permission)
-        #   set member permissions
-        set_permission(members_send_invite_permission, member_group, add_send_invitation_permission, remove_send_invitation_permission)
-        #   Save permissions settings to database
-        permission_settings.moderators_delete_messages = moderator_delete_messages_permission
-        permission_settings.moderators_delete_user = moderator_delete_user_permission
-        permission_settings.moderators_send_invitation = moderators_send_invite_permission
-        permission_settings.members_send_invitation = members_send_invite_permission
+    
 
-        permission_settings.save()
-        form.save()
-        return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
+
+# class RoomManagement(LoginRequiredMixin, UpdateView):
+#     """Here you can set permissions for each group"""
+#     model = Room
+#     form_class = RoomManagementForm
+#     second_form_class = ServerPermissionsForm
+#     template_name = 'viperchat/room_management.html'
+
+#     def get_object(self, *args, **kwargs):
+#         room_id = self.kwargs['pk']
+#         room = Room.objects.get(id=room_id)
+#         room_masters = Group.objects.get(name=f'{room.name}_masters')
+#         if self.request.user in room_masters.user_set.all():
+#             return room
+#         else:
+#             raise PermissionDenied
+        
+#     def get_context_data(self, *args, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         context['room'] = self.get_object()
+#         if 'form' not in context:
+#             context['form'] = self.form_class(instance=self.get_object())
+#         if 'second_form' not in context:
+#             context['second_form'] = self.second_form_class(instance=self.get_object().permission_settings)
+#         return context
+        
+#     def form_valid(self, form):
+#         permission_settings_form = ServerPermissionsForm(self.request.POST)
+#         permission_settings = self.get_object().permission_settings
+#         if form.is_valid() and permission_settings_form.is_valid():
+#             moderator_delete_messages_permission = permission_settings_form.cleaned_data['moderators_delete_messages']
+#             moderator_delete_user_permission = permission_settings_form.cleaned_data['moderators_delete_user']
+#             moderators_send_invite_permission = permission_settings_form.cleaned_data['moderators_send_invitation']
+#             members_send_invite_permission = permission_settings_form.cleaned_data['members_send_invitation']
+#             #   Get groups
+#             moderator_group = Group.objects.get(name=f'{self.get_object().name}_mods')
+#             member_group = Group.objects.get(name=f'{self.get_object().name}_members')
+#         #   set moderator permissions
+#         set_permission(moderator_delete_messages_permission, moderator_group, add_delete_message_permission, remove_delete_message_permission)
+#         set_permission(moderators_send_invite_permission, moderator_group, add_send_invitation_permission, remove_send_invitation_permission)
+#         #   set member permissions
+#         set_permission(members_send_invite_permission, member_group, add_send_invitation_permission, remove_send_invitation_permission)
+#         #   Save permissions settings to database
+#         permission_settings.moderators_delete_messages = moderator_delete_messages_permission
+#         permission_settings.moderators_delete_user = moderator_delete_user_permission
+#         permission_settings.moderators_send_invitation = moderators_send_invite_permission
+#         permission_settings.members_send_invitation = members_send_invite_permission
+
+#         permission_settings.save()
+#         form.save()
+#         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk}))
     
 
 class RoomRanksDisplay(LoginRequiredMixin, ListView):
@@ -403,7 +437,16 @@ class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         server = Server.objects.get(id=server_id)
         logged_user = self.request.user
         user_to_delete = self.get_object()
+        owners_group = Group.objects.get(name=f'{server.name}_owners')
+        masters_group = Group.objects.get(name=f'{server.name}_masters')
+        members_group = Group.objects.get(name=f'{server.name}_members')
+        moderators_group = Group.objects.get(name=f'{server.name}_moderators')
         if check_if_logged_user_can_delete_user(logged_user, user_to_delete, server) == True:
+            owners_group.user_set.remove(user_to_delete)
+            masters_group.user_set.remove(user_to_delete)
+            members_group.user_set.remove(user_to_delete)
+            moderators_group.user_set.remove(user_to_delete)
+            server.users.remove(user_to_delete)
             return redirect(reverse('server_users_list', kwargs={'pk': server_id}))
         else:
             raise PermissionDenied

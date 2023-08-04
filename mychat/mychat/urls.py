@@ -38,7 +38,6 @@ urlpatterns = [
     path('user/<slug:username>/your-rooms', vchat.UserOwnRooms.as_view(), name='logged_user_rooms'),
     path('delete-message/<uuid:pk>', vchat.DeleteMessage.as_view(), name='delete_message'),
     path('join-server/<uuid:pk>', vchat.JoinServer.as_view(), name='join_server'),
-    path('room-management/<uuid:pk>', vchat.RoomManagement.as_view(), name='room_management'),
     path('room-management/<uuid:pk>/groups', vchat.RoomRanksDisplay.as_view(), name='room_groups_management'),
     path('room-management/<uuid:pk>/groups/<slug:name>', vchat.UserRankDetail.as_view(), name='user_rank_edit'),
     path('delete-user/server/<uuid:server_id>/user/<slug:username>', vchat.DeleteUserFromServer.as_view(), name='delete_user_from_server'),
@@ -46,7 +45,9 @@ urlpatterns = [
     path('server/<uuid:pk>/users', vchat.ServerUsersList.as_view(), name='server_users_list'),
     path('messages/<uuid:pk>', vchat.MessageEdit.as_view(), name='message_edit'),
     path('create-server/', vchat.CreateServer.as_view(), name='create_server'),
-    path('server_details/<uuid:pk>', vchat.ServerDetails.as_view(), name='server_detail'),
+    path('server-details/<uuid:pk>', vchat.ServerDetails.as_view(), name='server_detail'),
     path('server-initial/<uuid:pk>', vchat.GiveInitialPermissions.as_view(), name='server_initial'),
+    path('server-edit/<uuid:pk>', vchat.ServerEdit.as_view(), name='server_edit'),
+    path('server-groups/management/<uuid:pk>', vchat.ServerGroupsManagement.as_view(), name='server_groups_management'),
 
 ]

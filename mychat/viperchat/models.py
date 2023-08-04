@@ -56,6 +56,7 @@ class Server(models.Model):
             ('delete_masters_from_server', 'Can delete users in master group'),
             ('delete_moderators_from_server', 'Can delete users in moderators group'),
             ('delete_members_from_server', 'Can delete users in members group'),
+            ('edit_permissions_in_server', 'Can modify groups permissions')
         ]
 
     def __str__(self):

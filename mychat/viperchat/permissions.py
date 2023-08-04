@@ -115,6 +115,12 @@ def remove_delete_members_from_server_permission(group):
     permission = Permission.objects.get(codename='delete_members_from_server', content_type=delete_members_content_type)
     return group.permissions.remove(permission)
 
+
+def add_edit_permissions_in_server(group):
+    edit_permission_content_type = ContentType.objects.get_for_model(Server)
+    permission = Permission.objects.get(codename='edit_permissions_in_server', content_type=edit_permission_content_type)
+    return group.permissions.add(permission)
+
 """-----------------------------------------------------------------------------------"""
 
 def set_permission(permission, group, action_true, action_false):
@@ -136,6 +142,7 @@ def initial_server_permissions(owners, masters, moderators, members):
     add_delete_masters_from_server_permission(owners)
     add_delete_moderators_from_server_permission(owners)
     add_delete_members_from_server_permission(owners)
+    add_edit_permissions_in_server(owners)
     #   Masters permissions
     add_delete_message_permission(masters)
     add_send_invitation_permission(masters)

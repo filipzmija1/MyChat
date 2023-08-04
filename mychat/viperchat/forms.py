@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from allauth.account.forms import SignupForm
 
-from .models import Room, ServerPermissionSettings
+from .models import Room, ServerPermissionSettings, Server
 
 
 class UserCreationForm(UserCreationForm):
@@ -70,9 +70,20 @@ class RoomManagementForm(forms.ModelForm):
 class ServerPermissionsForm(forms.ModelForm):
     class Meta:
         model = ServerPermissionSettings
-        fields = ['moderators_delete_messages', 'moderators_delete_user', 'moderators_send_invitation', 'members_send_invitation']
+        fields = [
+                  'masters_create_room', 'masters_send_invitation', 'masters_delete_user',
+                  'masters_delete_messages', 'masters_send_messages', 'moderators_create_room', 'moderators_delete_messages',
+                  'moderators_delete_user', 'moderators_send_invitation', 'moderators_send_messages',
+                  'members_create_room', 'members_delete_messages', 'members_delete_user', 'members_delete_user',
+                  'members_send_invitation', 'members_send_messages'
+                  ]
 
 
 class SendMessageForm(forms.Form):
     message = forms.CharField(max_length=255)
 
+
+class ServerEditForm(forms.ModelForm):
+    class Meta:
+        model = Server
+        fields = ['description', 'is_private']
