@@ -8,6 +8,18 @@ User = get_user_model()
 
 """-------------------------------------GROUP PERMISSIONS----------------------------"""
 
+def add_delete_user_from_server_permission(group):
+    delete_user_content_type = ContentType.objects.get_for_model(Room)
+    permission = Permission.objects.get(codename='delete_user_from_server', content_type=delete_user_content_type)
+    return group.permissions.add(permission)
+
+
+def remove_delete_user_from_server_permission(group):
+    delete_user_content_type = ContentType.objects.get_for_model(Room)
+    permission = Permission.objects.get(codename='delete_user_from_server', content_type=delete_user_content_type)
+    return group.permissions.remove(permission)
+
+
 def remove_delete_message_permission(group):
     message_content_type = ContentType.objects.get_for_model(Message)
     permission = Permission.objects.get(codename='delete_message_from_server', content_type=message_content_type)
@@ -123,40 +135,6 @@ def add_edit_permissions_in_server(group):
 
 """-----------------------------------------------------------------------------------"""
 
-def set_permission(permission_settings_model_value, group, add_permission_function, remove_permission_function):
-    if permission_settings_model_value == 'Allowed':
-        add_permission_function(group)
-        group.save()
-    elif permission_settings_model_value == 'Forbidden':
-        remove_permission_function(group)
-        group.save()
-
-
-def initial_server_permissions(owners, masters, moderators, members):
-    """Set initial permissions for groups in server"""
-    #   Owners permissions
-    add_delete_message_permission(owners)
-    add_send_invitation_permission(owners)
-    add_create_room_in_server_permission(owners)
-    add_send_messages_in_server_permission(owners)
-    add_delete_masters_from_server_permission(owners)
-    add_delete_moderators_from_server_permission(owners)
-    add_delete_members_from_server_permission(owners)
-    add_edit_permissions_in_server(owners)
-    #   Masters permissions
-    add_delete_message_permission(masters)
-    add_send_invitation_permission(masters)
-    add_send_messages_in_server_permission(masters)
-    add_delete_moderators_from_server_permission(masters)
-    add_delete_members_from_server_permission(masters)
-    #   Moderators permissions
-    add_delete_message_permission(moderators)
-    add_send_invitation_permission(moderators)
-    add_send_messages_in_server_permission(moderators)
-    add_delete_members_from_server_permission(moderators)
-    #   Members permissions
-    add_send_messages_in_server_permission(members)
-    add_send_invitation_permission(members)
 
 
 

@@ -7,8 +7,13 @@
 {% for group in server_groups %}
 {% if request.user in group|group_users and create_permission in group.permissions.all %}
 <a href="{% url 'create_room' server.id %}"><button>Create room</button></a> | 
+{% if request.user in group|group_users and edit_permissions in group.permissions.all %}
 <a href="{% url 'server_edit' server.id %}"><button>Change server info</button></a> | 
-<a href="{% url 'server_groups_management' server.id %}"><button>Manage permissions</button></a>
+<a href="{% url 'server_groups_management' server.id %}"><button>Manage permissions</button></a> | 
+{% endif %}
+{% if request.user in group|group_users and delete_users_permission in group.permissions.all %}
+<a href="{% url 'server_users_list' server.id %}"><button>Manage users</button> </a>
+{% endif %}
 <br>
 {% endif %}
 {% endfor %}
@@ -16,11 +21,24 @@
 About server: {{ server.description }}<br>
 {% if request.user in server.users.all %}
 Creator: {{ server.creator }} <br>
-<a href="{% url 'server_users_list' server.id %}">Users</a>
+{% if request.user in owners_group|group_users %}
+
+Users:
+{% for user in server.users.all %}
+<a href="{% url 'user_detail' user.username %}">{{ user.username }} </a> | 
+{% endfor %}
 <br>
+{% else %}
+Users:
+{% for user in server.users.all %}
+<a href="{% url 'user_detail' user.username %}">{{ user.username }} </a> | 
+{% endfor %}
+<br>
+{% endif %}
+
 
 Rooms: {% for room in server.room_set.all %}
-<a href="{% url 'room_detail' server_id=server.id pk=room.id %}">{{ room.name }}</a>, 
+<a href="{% url 'room_detail' server_id=server.id pk=room.id %}">{{ room.name }}</a> | 
 {% endfor %}
 <br>
 {% else %}

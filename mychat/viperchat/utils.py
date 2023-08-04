@@ -18,17 +18,20 @@ def initial_server_permissions(owners, masters, moderators, members):
     add_delete_moderators_from_server_permission(owners)
     add_delete_members_from_server_permission(owners)
     add_edit_permissions_in_server(owners)
+    add_delete_user_from_server_permission(owners)
     #   Masters permissions
     add_delete_message_permission(masters)
     add_send_invitation_permission(masters)
     add_send_messages_in_server_permission(masters)
     add_delete_moderators_from_server_permission(masters)
     add_delete_members_from_server_permission(masters)
+    add_delete_user_from_server_permission(masters)
     #   Moderators permissions
     add_delete_message_permission(moderators)
     add_send_invitation_permission(moderators)
     add_send_messages_in_server_permission(moderators)
     add_delete_members_from_server_permission(moderators)
+    add_delete_user_from_server_permission(moderators)
     #   Members permissions
     add_send_messages_in_server_permission(members)
     add_send_invitation_permission(members)
@@ -100,6 +103,7 @@ def set_masters_permissions(server_model_instance):
         if permission == 'masters_send_invitation_to_group':
             set_permission(value, masters_group, add_send_invitation_permission, remove_send_invitation_permission)
         if permission == 'masters_delete_user':
+            set_permission(value, masters_group, add_delete_user_from_server_permission, remove_delete_user_from_server_permission)
             set_permission(value, masters_group, add_delete_moderators_from_server_permission, remove_delete_moderators_from_server_permission)
             set_permission(value, masters_group, add_delete_members_from_server_permission, remove_delete_members_from_server_permission)
         if permission == 'masters_delete_messages':
@@ -125,6 +129,7 @@ def set_moderators_permissions(server_model_instance):
         if permission == 'moderators_send_invitation_to_group':
             set_permission(value, moderators_group, add_send_invitation_permission, remove_send_invitation_permission)
         if permission == 'moderators_delete_user':
+            set_permission(value, moderators_group, add_delete_user_from_server_permission, remove_delete_user_from_server_permission)
             set_permission(value, moderators_group, add_delete_members_from_server_permission, remove_delete_members_from_server_permission)
         if permission == 'moderators_delete_messages':
             set_permission(value, moderators_group, add_delete_message_permission, remove_delete_message_permission)

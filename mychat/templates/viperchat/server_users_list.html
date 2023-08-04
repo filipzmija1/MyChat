@@ -1,18 +1,19 @@
-{% extends 'viperchat/server_detail.html' %}
+{% include 'viperchat/server_detail.html' %}
 {% load template_filters %}
 
-{% block title %}Room users {% endblock %}
 
 {% block room %}
 <h2>All users</h2>
 {% for user in users %}
 
-<li><a href="{% url 'user_detail' user.username %}">{{ user.username }} </a> | 
-        {% if remover %}
+<li><a href="{% url 'user_detail' user.username %}">{{ user.username }} </a>
+    {% for group in server_groups %}
+        {% if request.user in group|group_users and delete_users_permission in group.permissions.all %}
             <a href="{% url 'delete_user_from_server' server_id=server.pk username=user.username %}">
-                <button>Delete from room</button>
+                <button>Delete from server</button>
             </a>
         {% endif %}
-        </li>
+        {% endfor %}
+
 {% endfor %}
 {% endblock %}
