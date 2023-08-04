@@ -52,7 +52,10 @@ class Server(models.Model):
     class Meta:
         permissions = [
             ('create_room_in_server', 'Can create room in server'),
-            ('send_messages_in_server', 'Can send messages in server')
+            ('send_messages_in_server', 'Can send messages in server'),
+            ('delete_masters_from_server', 'Can delete users in master group'),
+            ('delete_moderators_from_server', 'Can delete users in moderators group'),
+            ('delete_members_from_server', 'Can delete users in members group'),
         ]
 
     def __str__(self):
@@ -97,7 +100,7 @@ class Message(models.Model):
 
     class Meta:
         permissions = [
-            ("delete_message_from_room", "Can delete message from room"),
+            ("delete_message_from_server", "Can delete message from server"),
         ]
 
     def __str__(self):

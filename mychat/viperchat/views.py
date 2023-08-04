@@ -22,6 +22,7 @@ from django.utils import timezone
 from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings, Server
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm
 from .permissions import *
+from .utils import check_if_logged_user_can_delete_user
 
 
 User = get_user_model()
@@ -151,7 +152,7 @@ class DeleteMessage(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
             return True
         else:
             server = self.get_object().room.server
-            delete_message_permission = Permission.objects.get(codename='delete_message_from_room')
+            delete_message_permission = Permission.objects.get(codename='delete_message_from_server')
             server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
             for group in server_groups:
                 if logged_user in group.user_set.all() and delete_message_permission in group.permissions.all():
@@ -228,7 +229,7 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
         logged_user = self.request.user
         server_id = self.kwargs['server_id']
         server = Server.objects.get(id=server_id)
-        delete_message_permission = Permission.objects.get(codename='delete_message_from_room')
+        delete_message_permission = Permission.objects.get(codename='delete_message_from_server')
         server_groups = Group.objects.filter(name__startswith=f'{server.name}_')    # Get all server groups
         context['messages'] = Message.objects.filter(room=self.get_object())
         context['form'] = SendMessageForm()
@@ -288,7 +289,6 @@ class RoomManagement(LoginRequiredMixin, UpdateView):
             member_group = Group.objects.get(name=f'{self.get_object().name}_members')
         #   set moderator permissions
         set_permission(moderator_delete_messages_permission, moderator_group, add_delete_message_permission, remove_delete_message_permission)
-        set_permission(moderator_delete_user_permission, moderator_group, add_delete_user_from_group_permission, remove_user_from_group_permission)
         set_permission(moderators_send_invite_permission, moderator_group, add_send_invitation_permission, remove_send_invitation_permission)
         #   set member permissions
         set_permission(members_send_invite_permission, member_group, add_send_invitation_permission, remove_send_invitation_permission)
@@ -386,7 +386,7 @@ class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         server_id = self.kwargs['server_id']
         server = Server.objects.get(id=server_id)
-        server_groups = Group.objects.filter(name=f'{server.name}_')
+        server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
         delete_permission = Permission.objects.get(codename='delete_user_from_server')
         for group in server_groups:
             if self.request.user in group.user_set.all() and delete_permission in group.permissions.all():
@@ -399,27 +399,14 @@ class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         return user_to_delete
 
     def get(self, request, *args, **kwargs):
-        server_id = self.kwargs['pk']
+        server_id = self.kwargs['server_id']
         server = Server.objects.get(id=server_id)
         logged_user = self.request.user
         user_to_delete = self.get_object()
-        masters_group = Group.objects.get(name=f'{server.name}_masters')
-        moderators_group = Group.objects.get(name=f'{server.name}_moderators')
-        owners_group = Group.objects.get(name=f'{server.name}_owners')
-        members_group = Group.objects.get(name=f'{server.name}_members')
-        #   Check all statements if logged user can delete
-        if user_to_delete in owners_group.user_set.all() or \
-        user_to_delete in masters_group.user_set.all() and logged_user in masters_group.user_set.all() or \
-        user_to_delete in moderators_group.user_set.all() and logged_user in moderators_group.user_set.all() or \
-        user_to_delete in masters_group.user_set.all() and logged_user in moderators_group.user_set.all():
-            raise PermissionDenied
-        else:
-        #   Delete from any group in server
-            server.users.remove(user_to_delete)
-            masters_group.user_set.remove(user_to_delete)
-            moderators_group.ser_set.remove(user_to_delete)
-            members_group.user_set.remove(user_to_delete)
+        if check_if_logged_user_can_delete_user(logged_user, user_to_delete, server) == True:
             return redirect(reverse('server_users_list', kwargs={'pk': server_id}))
+        else:
+            raise PermissionDenied
         
 
 class UserRankEdit(LoginRequiredMixin, UpdateView):
