@@ -44,6 +44,7 @@ class ServerPermissionSettings(models.Model):
     masters_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_can_see_private_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     masters_can_edit_users_group = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    masters_can_edit_rooms = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     #   Moderators permissions
     moderators_create_room = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     moderators_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
@@ -51,6 +52,7 @@ class ServerPermissionSettings(models.Model):
     moderators_send_invitation_to_group = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_can_see_private_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    moderators_can_edit_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     #   Members permissions
     members_create_room = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     members_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
@@ -84,6 +86,7 @@ class Server(models.Model):
             ('edit_moderators_group', 'Can change moderators group'),
             ('edit_members_group', 'Can change members group'),
             ('edit_masters_group', 'Can change masters group'),
+            ('edit_rooms_in_server', 'Can change rooms data in server'),
         ]
 
     def __str__(self):
@@ -98,7 +101,7 @@ class Room(models.Model):
         editable=False
     )
     name = models.CharField(max_length=155)
-    description = models.TextField(blank=True, null=True)
+    description = models.TextField()
     is_private = models.BooleanField(default=False)
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
 

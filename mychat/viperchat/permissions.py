@@ -8,6 +8,18 @@ User = get_user_model()
 
 """-------------------------------------GROUP PERMISSIONS----------------------------"""
 
+def add_edit_rooms_in_server(group):
+    edit_rooms_content_type = ContentType.objects.get_for_model(Server)
+    permission = Permission.objects.get(codename='edit_rooms_in_server', content_type=edit_rooms_content_type)
+    return group.permissions.add(permission)
+
+
+def remove_edit_rooms_in_server(group):
+    edit_rooms_content_type = ContentType.objects.get_for_model(Server)
+    permission = Permission.objects.get(codename='edit_rooms_in_server', content_type=edit_rooms_content_type)
+    return group.permissions.remove(permission)
+
+
 def add_edit_moderators_group(group):
     edit_mdoerators_content_type = ContentType.objects.get_for_model(Server)
     permission = Permission.objects.get(codename='edit_moderators_group', content_type=edit_mdoerators_content_type)
@@ -18,7 +30,6 @@ def remove_edit_moderators_group(group):
     edit_mdoerators_content_type = ContentType.objects.get_for_model(Server)
     permission = Permission.objects.get(codename='edit_moderators_group', content_type=edit_mdoerators_content_type)
     return group.permissions.remove(permission)
-
 
 
 def add_edit_masters_group(group):

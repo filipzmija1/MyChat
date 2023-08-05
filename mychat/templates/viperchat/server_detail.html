@@ -3,7 +3,7 @@
 {% block title %}Server details {% endblock %}
 
 {% block content %}
-<h2>{{ server.name }} </h2>
+<h2><a href="{% url 'server_detail' server.id %}">{{ server.name }}</a> </h2>
 {% for group in server_groups %}
 {% if request.user in group|group_users and create_permission in group.permissions.all %}
 <a href="{% url 'create_room' server.id %}"><button>Create room</button></a> | 

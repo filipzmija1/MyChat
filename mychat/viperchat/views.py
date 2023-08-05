@@ -23,7 +23,7 @@ from .models import Room, Notification, FriendRequest, RoomInvite, Message, Serv
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm, ServerEditForm
 from .permissions import *
 from .context_processor import *
-from .utils import check_if_logged_user_can_delete_user, set_masters_permissions, set_permission, initial_server_permissions, \
+from .utils import check_if_logged_user_can_delete_user, set_masters_permissions, initial_server_permissions, \
             set_moderators_permissions, set_members_permissions, check_if_logged_user_can_change_users_group
 
 
@@ -137,8 +137,29 @@ class CreateRoom(LoginRequiredMixin, UserPassesTestMixin, CreateView):
         return super().form_valid(form)
     
     def get_success_url(self):
-        return reverse('server_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.object.pk})
+        return reverse('room_detail', kwargs={'pk': self.object.pk, 'server_id': self.get_object().id})
         
+
+class RoomEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Room
+    fields = ['name', 'description', 'is_private']
+    template_name = 'viperchat/room_edit.html'
+
+    def test_func(self):
+        server_groups = Group.objects.filter(name__startswith=f'{self.get_object().server.name}_')
+        permission = Permission.objects.get(codename='edit_rooms_in_server')
+        logged_user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
+        if permission in logged_user_group[0].permissions.all():
+            return True
+        raise PermissionDenied
+    
+    def get_object(self):
+        room = Room.objects.get(id=self.kwargs['pk'])
+        return room
+    
+    def get_success_url(self):
+        return reverse('room_detail', kwargs={'server_id': self.get_object().server.id, 'pk':self.get_object().id} )
+
 
 class DeleteMessage(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     """logged user or room moderator can delete message in room"""
@@ -202,6 +223,7 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
     model = Room
     context_object_name = 'room'
     form_class = SendMessageForm
+    template_name = 'viperchat/room_detail.html'
 
     def test_func(self):
         server_id = self.kwargs['server_id']
@@ -226,6 +248,7 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
         context['messages'] = Message.objects.filter(room=self.get_object())
         context['form'] = SendMessageForm()
         context['server'] = self.get_object().server
+        context['server_groups'] = server_groups
         for group in server_groups:
             if logged_user in group.user_set.all() and delete_message_permission in group.permissions.all():
                 context["deleters"] = group.user_set.all()
@@ -325,7 +348,7 @@ class ServerUsersManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
         raise PermissionDenied
 
     def get_object(self, *args, **kwargs):
-        return Server.objects.get(id=self.kwargs['pk'])
+        return Server.objects.get(id=self.kwargs['server_id'])
     
     def get_queryset(self):
         logged_user = self.request.user
@@ -371,7 +394,7 @@ class UserGroupEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         if check_if_logged_user_can_change_users_group(self.request.user, user_to_change, server, group) == True:
             user_to_change_group[0].user_set.remove(user_to_change)
             group.user_set.add(user_to_change)
-            return redirect(reverse('server_users_list', kwargs={'pk': server.id}))
+            return redirect(reverse('server_users_list', kwargs={'server_id': server.id}))
         else:
             raise PermissionDenied
 
@@ -391,6 +414,31 @@ class UserServerList(LoginRequiredMixin, UserPassesTestMixin, ListView):
     
     def get_queryset(self):
         return Server.objects.filter(users=self.request.user)
+
+
+# class UserRankDetail(LoginRequiredMixin, DetailView):
+#     """Show which users belongs to which group"""
+#     model = Room
+#     template_name = 'viperchat/rank_management.html'
+#     fields = []
+
+#     def get_object(self, *args, **kwargs):
+#         room_id = self.kwargs['pk']
+#         room = Room.objects.get(id=room_id)
+#         logged_user = self.request.user
+#         room_owners_group = Group.objects.get(name=f'{room.name}_masters')
+#         if logged_user in room_owners_group.user_set.all():
+#             return room
+#         else:
+#             raise PermissionDenied
+
+#     def get_context_data(self, **kwargs):
+#         context = super().get_context_data(**kwargs)
+#         group_name = self.kwargs['name']
+#         context['group'] = Group.objects.get(name=group_name)
+#         context['room'] = self.get_object()
+#         context['groups'] = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
+#         return context
     
 
 class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
@@ -434,52 +482,52 @@ class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             raise PermissionDenied
         
 
-class UserRankEdit(LoginRequiredMixin, UpdateView):
-    """Here you can edit user's groups"""
-    model = Room
-    fields = []
+# class UserRankEdit(LoginRequiredMixin, UpdateView):
+#     """Here you can edit user's groups"""
+#     model = Room
+#     fields = []
 
-    def get_object(self):
-        edited_user = User.objects.get(username=self.kwargs['username'])
-        room = Room.objects.get(id=self.kwargs['pk'])
-        masters_group = Group.objects.get(name=f'{room.name}_masters')
-        logged_user = self.request.user
-        if edited_user in masters_group.user_set.all():
-            raise PermissionDenied
-        elif logged_user in masters_group.user_set.all():
-            return edited_user
-        else:
-            raise PermissionDenied
+#     def get_object(self):
+#         edited_user = User.objects.get(username=self.kwargs['username'])
+#         room = Room.objects.get(id=self.kwargs['pk'])
+#         masters_group = Group.objects.get(name=f'{room.name}_masters')
+#         logged_user = self.request.user
+#         if edited_user in masters_group.user_set.all():
+#             raise PermissionDenied
+#         elif logged_user in masters_group.user_set.all():
+#             return edited_user
+#         else:
+#             raise PermissionDenied
     
-    def get(self, request, *args, **kwargs):
-        edited_user = self.get_object()
-        room = Room.objects.get(id=self.kwargs['pk'])
-        group_to_promote = Group.objects.get(name=self.kwargs['name'])
-        moderators_group = Group.objects.get(name=f'{room.name}_mods')
-        members_group = Group.objects.get(name=f'{room.name}_members')
-        masters_group = Group.objects.get(name=f'{room.name}_masters')
-        if edited_user in group_to_promote.user_set.all() or edited_user in masters_group.user_set.all():
-            raise PermissionDenied
-        else:
-            #   Delete from user group and then add to another
-            moderators_group.user_set.remove(edited_user)
-            members_group.user_set.remove(edited_user)
-            masters_group.user_set.remove(edited_user)
-            #   Add to destined group
-            group_to_promote.user_set.add(edited_user)
-            return redirect(reverse('room_groups_management', kwargs={'pk': room.id}))
+#     def get(self, request, *args, **kwargs):
+#         edited_user = self.get_object()
+#         room = Room.objects.get(id=self.kwargs['pk'])
+#         group_to_promote = Group.objects.get(name=self.kwargs['name'])
+#         moderators_group = Group.objects.get(name=f'{room.name}_mods')
+#         members_group = Group.objects.get(name=f'{room.name}_members')
+#         masters_group = Group.objects.get(name=f'{room.name}_masters')
+#         if edited_user in group_to_promote.user_set.all() or edited_user in masters_group.user_set.all():
+#             raise PermissionDenied
+#         else:
+#             #   Delete from user group and then add to another
+#             moderators_group.user_set.remove(edited_user)
+#             members_group.user_set.remove(edited_user)
+#             masters_group.user_set.remove(edited_user)
+#             #   Add to destined group
+#             group_to_promote.user_set.add(edited_user)
+#             return redirect(reverse('room_groups_management', kwargs={'pk': room.id}))
         
 
-class UserOwnRooms(LoginRequiredMixin, ListView):
-    """Display user own rooms"""
-    model = Room
-    context_object_name = "user_rooms"
-    template_name = 'viperchat/user_own_rooms.html'
+# class UserOwnRooms(LoginRequiredMixin, ListView):
+#     """Display user own rooms"""
+#     model = Room
+#     context_object_name = "user_rooms"
+#     template_name = 'viperchat/user_own_rooms.html'
 
-    def get_queryset(self):
-        logged_user = self.request.user
-        rooms = Room.objects.filter(users=logged_user)
-        return rooms
+#     def get_queryset(self):
+#         logged_user = self.request.user
+#         rooms = Room.objects.filter(users=logged_user)
+#         return rooms
 
 
 class UserProfile(LoginRequiredMixin, FormMixin, DetailView):

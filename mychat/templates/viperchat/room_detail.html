@@ -1,10 +1,13 @@
-{% extends 'viperchat/server_detail.html' %}
+{% include 'viperchat/server_detail.html' %}
+{% load template_filters %}
 
 {% block room %}
+
 <h2>{{ room.name }}</h2>
 <!-- <a href="">Invite friends</a><br> -->
-{% if user in masters %}
-<a href="{% url 'room_management' room.id %}"><button>Room management</button><br></a>
+{% check_if_logged_user_have_edit_room_permission request.user server as check_permission %}
+{% if check_permission == True %}
+<a href="{% url 'room_edit' server_id=server.id pk=room.id %}"><button>Edit room</button><br></a>
 {% endif %}
 About room: {{ room.description }}<br>
 Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<br> {% endif %}

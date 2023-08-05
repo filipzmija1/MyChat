@@ -71,9 +71,9 @@ class ServerPermissionsForm(forms.ModelForm):
     class Meta:
         model = ServerPermissionSettings
         fields = [
-                  'masters_create_room', 'masters_can_edit_users_group', 'masters_send_invitation_to_group', 'masters_delete_user', 'masters_can_see_private_rooms',
+                  'masters_create_room', 'masters_can_edit_rooms', 'masters_can_edit_users_group', 'masters_send_invitation_to_group', 'masters_delete_user', 'masters_can_see_private_rooms',
                   'masters_delete_messages', 'masters_send_messages', 'moderators_create_room', 'moderators_delete_messages',
-                  'moderators_delete_user', 'moderators_send_invitation_to_group', 'moderators_send_messages','moderators_can_see_private_rooms', 
+                  'moderators_delete_user', 'moderators_can_edit_rooms', 'moderators_send_invitation_to_group', 'moderators_send_messages','moderators_can_see_private_rooms', 
                   'members_create_room', 'members_delete_messages', 'members_send_invitation_to_group', 'members_send_messages',
                   'members_can_see_private_rooms'
                   ]

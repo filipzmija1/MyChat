@@ -23,6 +23,7 @@ def initial_server_permissions(owners, masters, moderators, members):
     add_edit_moderators_group(owners)
     add_edit_members_group(owners)
     add_edit_users_group(owners)
+    add_edit_rooms_in_server(owners)
     #   Masters permissions
     add_delete_message_permission(masters)
     add_send_invitation_permission(masters)
@@ -30,6 +31,7 @@ def initial_server_permissions(owners, masters, moderators, members):
     add_delete_moderators_from_server_permission(masters)
     add_delete_members_from_server_permission(masters)
     add_delete_user_from_server_permission(masters)
+    add_edit_rooms_in_server(masters)
     #   Moderators permissions
     add_delete_message_permission(moderators)
     add_send_invitation_permission(moderators)
@@ -120,6 +122,8 @@ def set_masters_permissions(server_model_instance):
             set_permission(value, masters_group, add_edit_users_group, remove_edit_users_group)
             set_permission(value, masters_group, add_edit_moderators_group, remove_edit_moderators_group)
             set_permission(value, masters_group, add_edit_members_group, remove_edit_members_group)
+        if permission == 'masters_can_edit_rooms':
+            set_permission(value, masters_group, add_edit_rooms_in_server, remove_edit_rooms_in_server)
     masters_group.save()
     return "Permissions changed successfully"
 
@@ -145,6 +149,8 @@ def set_moderators_permissions(server_model_instance):
             set_permission(value, moderators_group, add_send_messages_in_server_permission, remove_send_messages_in_server_permission)
         if permission == 'moderators_can_see_private_rooms':
             set_permission(value, moderators_group, add_display_room_data_permission, remove_display_room_data_permission)
+        if permission == 'moderators_can_edit_rooms':
+            set_permission(value, moderators_group, add_edit_rooms_in_server, remove_edit_rooms_in_server)
     moderators_group.save()
     return "Permissions changed successfully"
 
