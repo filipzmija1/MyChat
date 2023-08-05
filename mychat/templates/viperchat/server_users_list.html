@@ -6,14 +6,20 @@
 <h2>All users</h2>
 {% for user in users %}
 
-<li><a href="{% url 'user_detail' user.username %}">{{ user.username }}</a> ({% user_group user server %})
-    {% for group in server_groups %}
+<li><a href="{% url 'user_detail' user.username %}">{{ user.username }}</a> ({% user_group user server %}) 
+        {% for group in server_groups %}   
+        {% user_group_all_data user server as user_own_group %}
+        {% if user_own_group == group %}
+        {% else %}
+        <a href="{% url 'user_group_edit' server_id=server.id username=user.username name=group.name %}"><button>Give {{ group.name|split_group_name }} rank</button></a>
+        {% endif %}
+        {% endfor %}
+        {% for group in server_groups %}
         {% if request.user in group|group_users and delete_users_permission in group.permissions.all %}
         
         {% check_if_logged_user_can_delete_another_user request.user user server as can_delete %}
         {% if can_delete %}
 <a href="{% url 'delete_user_from_server' server_id=server.pk username=user.username %}"><button>Delete from server</button> </a>
-       
         {% endif %}
         {% endif %}
             

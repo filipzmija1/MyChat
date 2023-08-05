@@ -24,7 +24,7 @@ from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessag
 from .permissions import *
 from .context_processor import *
 from .utils import check_if_logged_user_can_delete_user, set_masters_permissions, set_permission, initial_server_permissions, \
-            set_moderators_permissions, set_members_permissions
+            set_moderators_permissions, set_members_permissions, check_if_logged_user_can_change_users_group
 
 
 User = get_user_model()
@@ -334,7 +334,7 @@ class RoomRanksDisplay(LoginRequiredMixin, ListView):
         
 
 class ServerUsersManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    """Display room's users and give possibility to delete them from room"""
+    """Display server's users and give possibility to delete them from server or change their groups"""
     model = User
     context_object_name = 'users'
     template_name = 'viperchat/server_users_list.html'
@@ -363,9 +363,49 @@ class ServerUsersManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
         context['server_groups'] = server_groups
         context['server'] = self.get_object()
         return context
+
+
+class UserGroupEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = User
+    fields = []
+
+    def test_func(self):
+        server = Server.objects.get(id=self.kwargs['server_id'])
+        server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
+        edit_group_permission = Permission.objects.get(codename='change_user_group')
+        for group in server_groups:
+            if self.request.user in group.user_set.all() and edit_group_permission in group.permissions.all():
+                return True
+        raise PermissionDenied
     
+    def get_object(self):
+        user_username = self.kwargs['username']
+        user_to_change = User.objects.get(username=user_username)
+        return user_to_change
+
+    def get(self, *args, **kwargs):
+        group = Group.objects.get(name=self.kwargs['name'])
+        user_to_change = self.get_object()
+        server = Server.objects.get(id=self.kwargs['server_id'])
+        server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
+        moderators_group = Group.objects.get(name=f'{server.name}_moderators')
+        members_group = Group.objects.get(name=f'{server.name}_members')
+        masters_group = Group.objects.get(name=f'{server.name}_masters')
+        owners_group = Group.objects.get(name=f'{server.name}_owners')
+        #   Get changing user group
+        user_to_change_group = [group for group in server_groups if user_to_change in group.user_set.all()]
+        #   function details in utils.py file
+        if check_if_logged_user_can_change_users_group(self.request.user, user_to_change, server, group) == True:
+            user_to_change_group[0].user_set.remove(user_to_change)
+            group.user_set.add(user_to_change)
+            return redirect(reverse('server_users_list', kwargs={'pk': server.id}))
+        else:
+            raise PermissionDenied
+
+
 
 class UserServerList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """Display servers which user belongs to"""
     model = Server
     context_object_name = 'servers'
     template_name = 'viperchat/user_server_list.html'

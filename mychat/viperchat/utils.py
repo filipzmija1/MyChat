@@ -19,6 +19,10 @@ def initial_server_permissions(owners, masters, moderators, members):
     add_delete_members_from_server_permission(owners)
     add_edit_permissions_in_server(owners)
     add_delete_user_from_server_permission(owners)
+    add_edit_masters_group(owners)
+    add_edit_moderators_group(owners)
+    add_edit_members_group(owners)
+    add_edit_users_group(owners)
     #   Masters permissions
     add_delete_message_permission(masters)
     add_send_invitation_permission(masters)
@@ -73,7 +77,7 @@ def check_if_logged_user_can_delete_user(logged_user, user_to_delete, server):
         if logged_user in group.user_set.all() and \
         all(permission in group.permissions.all() for permission in masters_delete_permissions): 
             #   Check if masters have permission to delete user
-            if permission_settings.masters_delete_user == 'Forbidden' and \
+            if permission_settings.masters_delete_user == 'Forbidden' or \
             user_to_delete in owners_group.user_set.all() or \
             user_to_delete in masters_group.user_set.all():
                 return False
@@ -92,7 +96,7 @@ def check_if_logged_user_can_delete_user(logged_user, user_to_delete, server):
 def set_masters_permissions(server_model_instance):
     permission_settings = server_model_instance.permission_settings
     masters_group = Group.objects.get(name=f'{server_model_instance.name}_masters')
-    #   masters permission settings
+    #   masters permission settings from model
     masters_settings = {permission: value for permission, value in model_to_dict(permission_settings).items() 
                         if permission.startswith('masters_')}
     
@@ -112,6 +116,10 @@ def set_masters_permissions(server_model_instance):
             set_permission(value, masters_group, add_send_messages_in_server_permission, remove_send_messages_in_server_permission)
         if permission == 'masters_can_see_private_rooms':
             set_permission(value, masters_group, add_display_room_data_permission, remove_display_room_data_permission)
+        if permission == 'masters_can_edit_users_group':
+            set_permission(value, masters_group, add_edit_users_group, remove_edit_users_group)
+            set_permission(value, masters_group, add_edit_moderators_group, remove_edit_moderators_group)
+            set_permission(value, masters_group, add_edit_members_group, remove_edit_members_group)
     masters_group.save()
     return "Permissions changed successfully"
 
@@ -119,7 +127,7 @@ def set_masters_permissions(server_model_instance):
 def set_moderators_permissions(server_model_instance):
     permission_settings = server_model_instance.permission_settings
     moderators_group = Group.objects.get(name=f'{server_model_instance.name}_moderators')
-    #   moderator permission settings
+    #   moderator permission settings from model
     moderators_settings = {permission: value for permission, value in model_to_dict(permission_settings).items() 
                         if permission.startswith('moderators_')}
     #   set moderators group permissions
@@ -144,7 +152,7 @@ def set_moderators_permissions(server_model_instance):
 def set_members_permissions(server_model_instance):
     members_group = Group.objects.get(name=f'{server_model_instance.name}_members')
     permission_settings = server_model_instance.permission_settings
-     #   members permission settings
+     #   members permission settings from model
     members_settings = {permission: value for permission, value in model_to_dict(permission_settings).items()
                         if permission.startswith('members_')}
     # #   set members group permissions
@@ -170,3 +178,48 @@ def set_permission(permission_settings_model_value, group, add_permission_functi
     elif permission_settings_model_value == 'Forbidden':
         remove_permission_function(group)
         group.save()
+
+
+def check_if_logged_user_can_change_users_group(logged_user, user_to_change, server, destined_group):
+    """Only owners or masters can change others groups"""
+    server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
+    permission_settings = server.permission_settings
+    owners_group = Group.objects.get(name=f'{server.name}_owners')
+    masters_group = Group.objects.get(name=f'{server.name}_masters')
+
+    owners_change_permissions = [
+        Permission.objects.get(codename='edit_moderators_group'),
+        Permission.objects.get(codename='edit_members_group'),
+        Permission.objects.get(codename='edit_masters_group')
+    ]
+
+    masters_change_permissions = [
+        Permission.objects.get(codename='edit_moderators_group'),
+        Permission.objects.get(codename='edit_members_group'),
+    ]
+    #   masters have no permission to promote to masters or owners
+    if logged_user in masters_group.user_set.all():
+        if destined_group == owners_group or destined_group == masters_group:
+            return False
+
+    for group in server_groups:
+        if user_to_change in owners_group.user_set.all():
+            return False
+        #   Owners group
+        if logged_user in group.user_set.all() and \
+        all(permission in group.permissions.all() for permission in owners_change_permissions): 
+            if user_to_change in owners_group.user_set.all():   #   Change owners is prohibited
+                return False
+            else:
+                return True
+        #   Masters group
+        if logged_user in group.user_set.all() and \
+        all(permission in group.permissions.all() for permission in masters_change_permissions): 
+            #   Check if masters have permission to change users group
+            if permission_settings.masters_can_edit_users_group == 'Forbidden' or \
+            user_to_change in owners_group.user_set.all() or \
+            user_to_change in masters_group.user_set.all():
+                return False
+            else:
+                return True
+        

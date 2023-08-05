@@ -50,5 +50,7 @@ urlpatterns = [
     path('server-groups/management/<uuid:pk>', vchat.ServerGroupsManagement.as_view(), name='server_groups_management'),
     path('server-groups/management/change/<uuid:pk>', vchat.ServerPermissionChange.as_view(), name='permissions_change'),
     path('user/<slug:username>/servers', vchat.UserServerList.as_view(), name='logged_user_servers'),
+    path('user/<slug:username>/server/<uuid:server_id>/group/<slug:name>', vchat.UserGroupEdit.as_view(), name='user_group_edit'),
+
 
 ]

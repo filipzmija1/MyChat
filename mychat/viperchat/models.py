@@ -26,6 +26,7 @@ class ServerPermissionSettings(models.Model):
     masters_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_can_see_private_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    masters_can_edit_users_group = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     #   Moderators permissions
     moderators_create_room = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     moderators_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
@@ -63,7 +64,9 @@ class Server(models.Model):
             ('delete_moderators_from_server', 'Can delete users in moderators group'),
             ('delete_members_from_server', 'Can delete users in members group'),
             ('edit_permissions_in_server', 'Can modify groups permissions'),
-            
+            ('edit_moderators_group', 'Can change moderators group'),
+            ('edit_members_group', 'Can change members group'),
+            ('edit_masters_group', 'Can change masters group'),
         ]
 
     def __str__(self):
