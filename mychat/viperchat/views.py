@@ -310,29 +310,6 @@ class ServerPermissionChange(LoginRequiredMixin, UserPassesTestMixin, UpdateView
         return redirect(reverse('server_detail', kwargs={'pk': self.get_object().id}))
         
 
-class RoomRanksDisplay(LoginRequiredMixin, ListView):
-    """Show room groups and users belongs to eachone"""
-    model = Group
-    context_object_name = 'groups'
-    template_name = 'viperchat/room_groups_management.html'
-
-    def get_object(self, *args, **kwargs):
-        room_id = self.kwargs['pk']
-        room = Room.objects.get(id=room_id)
-        return room
-
-    def get_queryset(self):
-        logged_user = self.request.user
-        room_owners_group = Group.objects.get(name=f'{self.get_object().name}_masters')
-        if logged_user in room_owners_group.user_set.all():
-            return Group.objects.filter(name__startswith=f'{self.get_object().name}_')
-        
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['room'] = self.get_object()
-        return context
-        
-
 class ServerUsersManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """Display server's users and give possibility to delete them from server or change their groups"""
     model = User
@@ -388,10 +365,6 @@ class UserGroupEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         user_to_change = self.get_object()
         server = Server.objects.get(id=self.kwargs['server_id'])
         server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
-        moderators_group = Group.objects.get(name=f'{server.name}_moderators')
-        members_group = Group.objects.get(name=f'{server.name}_members')
-        masters_group = Group.objects.get(name=f'{server.name}_masters')
-        owners_group = Group.objects.get(name=f'{server.name}_owners')
         #   Get changing user group
         user_to_change_group = [group for group in server_groups if user_to_change in group.user_set.all()]
         #   function details in utils.py file
@@ -401,7 +374,6 @@ class UserGroupEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             return redirect(reverse('server_users_list', kwargs={'pk': server.id}))
         else:
             raise PermissionDenied
-
 
 
 class UserServerList(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -419,31 +391,6 @@ class UserServerList(LoginRequiredMixin, UserPassesTestMixin, ListView):
     
     def get_queryset(self):
         return Server.objects.filter(users=self.request.user)
-
-
-class UserRankDetail(LoginRequiredMixin, DetailView):
-    """Show which users belongs to which group"""
-    model = Room
-    template_name = 'viperchat/rank_management.html'
-    fields = []
-
-    def get_object(self, *args, **kwargs):
-        room_id = self.kwargs['pk']
-        room = Room.objects.get(id=room_id)
-        logged_user = self.request.user
-        room_owners_group = Group.objects.get(name=f'{room.name}_masters')
-        if logged_user in room_owners_group.user_set.all():
-            return room
-        else:
-            raise PermissionDenied
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        group_name = self.kwargs['name']
-        context['group'] = Group.objects.get(name=group_name)
-        context['room'] = self.get_object()
-        context['groups'] = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
-        return context
     
 
 class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):

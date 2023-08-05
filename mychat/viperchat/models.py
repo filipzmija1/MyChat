@@ -14,6 +14,23 @@ class User(AbstractUser):
         ]
 
 
+class UserPermissionSettings(models.Model):
+    CHOICES = (
+        ('Allowed', 'Allowed'),
+        ('Forbidden', 'Forbidden'),
+    )
+    only_friends_see_your_profile = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    everyone_see_your_profile = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    hide_email = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    hide_first_name = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    hide_surname = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    hide_friends = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=True, null=True)
+
+    def __str__(self):
+        return self.user.username
+
+
 class ServerPermissionSettings(models.Model):
     CHOICES = (
         ('Allowed', 'Allowed'),

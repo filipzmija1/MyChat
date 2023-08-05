@@ -39,8 +39,8 @@ def user_group_all_data(user, server):
 
 
 @register.simple_tag
-def check_if_logged_user_can_change_another_users_group(logged_user, user_to_change, server):
-    if check_if_logged_user_can_change_users_group(logged_user, user_to_change, server) == True:
+def check_if_logged_user_can_change_another_users_group(logged_user, user_to_change, server, destined_group):
+    if check_if_logged_user_can_change_users_group(logged_user, user_to_change, server, destined_group) == True:
         return True
     else:
         return False

@@ -87,3 +87,5 @@ class ServerEditForm(forms.ModelForm):
     class Meta:
         model = Server
         fields = ['description', 'is_private']
+
+
