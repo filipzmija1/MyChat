@@ -7,6 +7,7 @@
 {% for group in server_groups %}
 {% if request.user in group|group_users and create_permission in group.permissions.all %}
 <a href="{% url 'create_room' server.id %}"><button>Create room</button></a> | 
+{% endif %}
 {% if request.user in group|group_users and edit_permissions in group.permissions.all %}
 <a href="{% url 'server_edit' server.id %}"><button>Change server info</button></a> | 
 <a href="{% url 'server_groups_management' server.id %}"><button>Manage permissions</button></a> | 
@@ -14,10 +15,10 @@
 {% if request.user in group|group_users and delete_users_permission in group.permissions.all %}
 <a href="{% url 'server_users_list' server.id %}"><button>Manage users</button> </a>
 {% endif %}
-<br>
-{% endif %}
-{% endfor %}
 
+
+{% endfor %}
+<br>
 About server: {{ server.description }}<br>
 {% if request.user in server.users.all %}
 Creator: {{ server.creator }} <br>

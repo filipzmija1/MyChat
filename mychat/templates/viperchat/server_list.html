@@ -3,6 +3,8 @@
 {% block content %}
 <h2>Public servers</h2>
 {% for server in server_list %}
+{% if server.is_private == False %}
 <li><a href="{% url 'server_detail' server.id %}">{{ server.name }}</a> </li>
+{% endif %}
 {% endfor %}
 {% endblock %}

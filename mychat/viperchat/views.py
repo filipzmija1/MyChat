@@ -359,10 +359,27 @@ class ServerUsersManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
         
     def get_context_data(self, *args, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['server_groups'] = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
+        server_groups = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
+        context['server_groups'] = server_groups
         context['server'] = self.get_object()
         return context
-        
+    
+
+class UserServerList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Server
+    context_object_name = 'servers'
+    template_name = 'viperchat/user_server_list.html'
+
+    def test_func(self):
+        user_username = self.kwargs['username']
+        if self.request.user.username == user_username:
+            return True
+        else:
+            return False
+    
+    def get_queryset(self):
+        return Server.objects.filter(users=self.request.user)
+
 
 class UserRankDetail(LoginRequiredMixin, DetailView):
     """Show which users belongs to which group"""
