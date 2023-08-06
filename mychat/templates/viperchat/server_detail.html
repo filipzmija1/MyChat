@@ -37,9 +37,15 @@ Users:
 <br>
 {% endif %}
 
+{% check_if_logged_user_private_room_permission request.user server as private_room_permission %}
 
 Rooms: {% for room in server.room_set.all %}
+{% if room.is_private == False %}
 <a href="{% url 'room_detail' server_id=server.id pk=room.id %}">{{ room.name }}</a> | 
+{% elif private_room_permission == True %}
+
+<a href="{% url 'room_detail' server_id=server.id pk=room.id %}">{{ room.name }}</a> | 
+{% endif %}
 {% endfor %}
 <br>
 {% else %}

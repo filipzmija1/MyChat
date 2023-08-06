@@ -108,13 +108,13 @@ def add_send_invitation_permission(group):
 
 def remove_display_room_data_permission(group):
     display_room_data_content_type = ContentType.objects.get_for_model(Room)
-    permission = Permission.objects.get(codename='display_room_data', content_type=display_room_data_content_type)
+    permission = Permission.objects.get(codename='display_private_room_data', content_type=display_room_data_content_type)
     return group.permissions.remove(permission)
 
 
 def add_display_room_data_permission(group):
     display_room_data_content_type = ContentType.objects.get_for_model(Room)
-    permission = Permission.objects.get(codename='display_room_data', content_type=display_room_data_content_type)
+    permission = Permission.objects.get(codename='display_private_room_data', content_type=display_room_data_content_type)
     return group.permissions.add(permission)
 
 

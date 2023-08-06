@@ -17,6 +17,17 @@ def group_users(group):
 
 
 @register.simple_tag
+def check_if_logged_user_private_room_permission(logged_user, server):
+    server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
+    user_group = [group for group in server_groups if logged_user in group.user_set.all()]
+    permission = Permission.objects.get(codename='display_private_room_data')
+    if permission in user_group[0].permissions.all():
+        return True
+    else:
+        return False
+
+
+@register.simple_tag
 def user_group(user, server):
     server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
     user_group = [group for group in server_groups if user in group.user_set.all()]
@@ -29,6 +40,17 @@ def check_if_logged_user_can_delete_another_user(logged_user, user_to_delete, se
         return True
     else:
         return False
+    
+
+@register.simple_tag
+def check_if_logged_user_have_permission(logged_user, server, permission):
+    server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
+    user_group = [group for group in server_groups if logged_user in group.user_set.all()]
+    if permission in user_group[0].permissions.all():
+        return True
+    else:
+        return False
+
 
 
 @register.simple_tag
@@ -55,3 +77,4 @@ def check_if_logged_user_have_edit_room_permission(logged_user, server):
         return True
     else:
         return False
+    

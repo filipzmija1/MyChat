@@ -177,11 +177,11 @@ def set_members_permissions(server_model_instance):
     return "Permissions changed successfully"
     
 
-def set_permission(permission_settings_model_value, group, add_permission_function, remove_permission_function):
-    if permission_settings_model_value == 'Allowed':
+def set_permission(permission_settings_object, group, add_permission_function, remove_permission_function):
+    if permission_settings_object == 'Allowed':
         add_permission_function(group)
         group.save()
-    elif permission_settings_model_value == 'Forbidden':
+    elif permission_settings_object == 'Forbidden':
         remove_permission_function(group)
         group.save()
 

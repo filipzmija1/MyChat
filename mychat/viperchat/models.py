@@ -9,8 +9,9 @@ class User(AbstractUser):
 
     class Meta:
         permissions = [
-            ('display_user_profile', 'Can display user informations'),
-            ('change_user_group', 'Can change users group'),
+            ('friends_see_profile', 'Friends can see user profile'),
+            ('change_user_group', 'Can change users group'),    #   Modify users group in server
+            ('everyone_see_profile', 'Everyone can see user profile')
         ]
 
 
@@ -79,10 +80,13 @@ class Server(models.Model):
         permissions = [
             ('create_room_in_server', 'Can create room in server'),
             ('send_messages_in_server', 'Can send messages in server'),
+        
             ('delete_masters_from_server', 'Can delete users in master group'),
             ('delete_moderators_from_server', 'Can delete users in moderators group'),
             ('delete_members_from_server', 'Can delete users in members group'),
+
             ('edit_permissions_in_server', 'Can modify groups permissions'),
+
             ('edit_moderators_group', 'Can change moderators group'),
             ('edit_members_group', 'Can change members group'),
             ('edit_masters_group', 'Can change masters group'),

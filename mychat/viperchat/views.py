@@ -31,7 +31,9 @@ User = get_user_model()
 
 
 class HomePage(View):
-    """Start page view with links"""
+    """
+    Start page view with links
+    """
     template_name = 'viperchat/base.html'
     
     def get(self, request, *args, **kwargs):
@@ -55,7 +57,9 @@ class CreateServer(LoginRequiredMixin, CreateView):
     
 
 class GiveInitialPermissions(LoginRequiredMixin, CreateView):
-    """Creates one room(general), server groups and gives them default permissions"""
+    """
+    Creates one room(general), server groups and gives them default permissions
+    """
     model = Room
     fields = []
 
@@ -114,13 +118,14 @@ class ServerDetails(LoginRequiredMixin, DetailView):
 
 class CreateRoom(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     model = Room
-    fields = ['name', 'description']
+    fields = ['name', 'description', 'is_private']
 
     def test_func(self):
         server_id = self.kwargs['pk']
         server = Server.objects.get(id=server_id)
         server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
         create_permission = Permission.objects.get(codename='create_room_in_server')
+        #   Check if user has permission to create room
         for group in server_groups:
             if self.request.user in group.user_set.all() and create_permission in group.permissions.all():
                 return True
@@ -149,6 +154,7 @@ class RoomEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
         server_groups = Group.objects.filter(name__startswith=f'{self.get_object().server.name}_')
         permission = Permission.objects.get(codename='edit_rooms_in_server')
         logged_user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
+        #   Check if user has permission to edit room data
         if permission in logged_user_group[0].permissions.all():
             return True
         raise PermissionDenied
@@ -162,7 +168,9 @@ class RoomEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 
 class DeleteMessage(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    """logged user or room moderator can delete message in room"""
+    """
+    logged user or room moderator can delete message in room
+    """
     model = Message
 
     def test_func(self):
@@ -192,13 +200,17 @@ class DeleteMessage(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         
 
 class ServerList(ListView):
-    """Shows every room"""
+    """
+    Shows every room
+    """
     model = Server
     paginate_by = 20
 
 
 class JoinServer(LoginRequiredMixin, UpdateView):
-    """Allows user to join to public room"""
+    """
+    Allows user to join to public room
+    """
     model = Room
 
     def get_object(self, *args, **kwargs):
@@ -219,7 +231,9 @@ class JoinServer(LoginRequiredMixin, UpdateView):
     
 
 class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView):
-    """Shows room details and gives posibility to write message in chatroom"""
+    """
+    Shows room details and gives posibility to write message in chatroom
+    """
     model = Room
     context_object_name = 'room'
     form_class = SendMessageForm
@@ -228,7 +242,13 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
     def test_func(self):
         server_id = self.kwargs['server_id']
         server = Server.objects.get(id=server_id)
-        if self.request.user in server.users.all():
+        server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
+        room = self.get_object()
+        show_private_room_permission = Permission.objects.get(codename='display_private_room_data')
+        logged_user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
+        if room.is_private == True and show_private_room_permission in logged_user_group[0].permissions.all():
+            return True
+        elif room.is_private == False and self.request.user in server.users.all():
             return True
         else:
             raise PermissionDenied
@@ -244,11 +264,13 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
         server_id = self.kwargs['server_id']
         server = Server.objects.get(id=server_id)
         delete_message_permission = Permission.objects.get(codename='delete_message_from_server')
+        send_message_permission = Permission.objects.get(codename='send_messages_in_server')
         server_groups = Group.objects.filter(name__startswith=f'{server.name}_')    # Get all server groups
         context['messages'] = Message.objects.filter(room=self.get_object())
         context['form'] = SendMessageForm()
         context['server'] = self.get_object().server
         context['server_groups'] = server_groups
+        context['send_message_permission'] = send_message_permission
         for group in server_groups:
             if logged_user in group.user_set.all() and delete_message_permission in group.permissions.all():
                 context["deleters"] = group.user_set.all()
@@ -256,6 +278,11 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
     
     def post(self, request, *args, **kwargs):
         form = self.get_form()
+        send_message_permission = Permission.objects.get(codename='send_messages_in_server')
+        server_groups = Group.objects.filter(name__startswith=f'{self.get_object().server.name}_')
+        user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
+        if not send_message_permission in user_group[0].permissions.all():
+            raise PermissionDenied
         if form.is_valid():
             room = self.get_object()
             author = self.request.user
@@ -285,6 +312,9 @@ class ServerEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 
 class ServerGroupsManagement(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Display groups permissions settings
+    """
     model = ServerPermissionSettings
     template_name = 'viperchat/server_groups_management.html'
     form_class = ServerPermissionsForm
@@ -306,9 +336,12 @@ class ServerGroupsManagement(LoginRequiredMixin, UserPassesTestMixin, UpdateView
     def get_success_url(self):
         #   Redirects to URL which change permissions
         return reverse('permissions_change', kwargs={'pk': self.kwargs['pk']})
-        
+
 
 class ServerPermissionChange(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Saves groups permissions changes
+    """
     model = Group
     fields = []
 
@@ -334,7 +367,9 @@ class ServerPermissionChange(LoginRequiredMixin, UserPassesTestMixin, UpdateView
         
 
 class ServerUsersManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    """Display server's users and give possibility to delete them from server or change their groups"""
+    """
+    Display server's users and give possibility to delete them from server or change their groups
+    """
     model = User
     context_object_name = 'users'
     template_name = 'viperchat/server_users_list.html'
@@ -366,6 +401,9 @@ class ServerUsersManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
 
 class UserGroupEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Edit user groups to change his permissions
+    """
     model = User
     fields = []
 
@@ -400,7 +438,9 @@ class UserGroupEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
 
 class UserServerList(LoginRequiredMixin, UserPassesTestMixin, ListView):
-    """Display servers which user belongs to"""
+    """
+    Display servers which user belongs to
+    """
     model = Server
     context_object_name = 'servers'
     template_name = 'viperchat/user_server_list.html'
@@ -416,33 +456,10 @@ class UserServerList(LoginRequiredMixin, UserPassesTestMixin, ListView):
         return Server.objects.filter(users=self.request.user)
 
 
-# class UserRankDetail(LoginRequiredMixin, DetailView):
-#     """Show which users belongs to which group"""
-#     model = Room
-#     template_name = 'viperchat/rank_management.html'
-#     fields = []
-
-#     def get_object(self, *args, **kwargs):
-#         room_id = self.kwargs['pk']
-#         room = Room.objects.get(id=room_id)
-#         logged_user = self.request.user
-#         room_owners_group = Group.objects.get(name=f'{room.name}_masters')
-#         if logged_user in room_owners_group.user_set.all():
-#             return room
-#         else:
-#             raise PermissionDenied
-
-#     def get_context_data(self, **kwargs):
-#         context = super().get_context_data(**kwargs)
-#         group_name = self.kwargs['name']
-#         context['group'] = Group.objects.get(name=group_name)
-#         context['room'] = self.get_object()
-#         context['groups'] = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
-#         return context
-    
-
 class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
-    """Deletes user from room and takes permissions"""
+    """
+    Deletes user from server and server's groups
+    """
     model = Server
     fields = []
 
@@ -480,58 +497,12 @@ class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             return redirect(reverse('server_users_list', kwargs={'pk': server_id}))
         else:
             raise PermissionDenied
-        
-
-# class UserRankEdit(LoginRequiredMixin, UpdateView):
-#     """Here you can edit user's groups"""
-#     model = Room
-#     fields = []
-
-#     def get_object(self):
-#         edited_user = User.objects.get(username=self.kwargs['username'])
-#         room = Room.objects.get(id=self.kwargs['pk'])
-#         masters_group = Group.objects.get(name=f'{room.name}_masters')
-#         logged_user = self.request.user
-#         if edited_user in masters_group.user_set.all():
-#             raise PermissionDenied
-#         elif logged_user in masters_group.user_set.all():
-#             return edited_user
-#         else:
-#             raise PermissionDenied
-    
-#     def get(self, request, *args, **kwargs):
-#         edited_user = self.get_object()
-#         room = Room.objects.get(id=self.kwargs['pk'])
-#         group_to_promote = Group.objects.get(name=self.kwargs['name'])
-#         moderators_group = Group.objects.get(name=f'{room.name}_mods')
-#         members_group = Group.objects.get(name=f'{room.name}_members')
-#         masters_group = Group.objects.get(name=f'{room.name}_masters')
-#         if edited_user in group_to_promote.user_set.all() or edited_user in masters_group.user_set.all():
-#             raise PermissionDenied
-#         else:
-#             #   Delete from user group and then add to another
-#             moderators_group.user_set.remove(edited_user)
-#             members_group.user_set.remove(edited_user)
-#             masters_group.user_set.remove(edited_user)
-#             #   Add to destined group
-#             group_to_promote.user_set.add(edited_user)
-#             return redirect(reverse('room_groups_management', kwargs={'pk': room.id}))
-        
-
-# class UserOwnRooms(LoginRequiredMixin, ListView):
-#     """Display user own rooms"""
-#     model = Room
-#     context_object_name = "user_rooms"
-#     template_name = 'viperchat/user_own_rooms.html'
-
-#     def get_queryset(self):
-#         logged_user = self.request.user
-#         rooms = Room.objects.filter(users=logged_user)
-#         return rooms
 
 
 class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
-    """Shows user profile"""
+    """
+    Shows user profile
+    """
     model = User
     template_name = 'viperchat/user_profile.html'
     context_object_name = 'user'
@@ -586,7 +557,9 @@ class MessageEdit(LoginRequiredMixin, UpdateView):
         return redirect(self.get_success_url())
         
     def get_success_url(self):
-        """Success url depends on if chat is in room or between two users"""
+        """
+        Success url depends on if chat is in room or between two users
+        """
         message_id = self.kwargs['pk']
         message = Message.objects.get(id=message_id)
         if message.room:
@@ -596,7 +569,9 @@ class MessageEdit(LoginRequiredMixin, UpdateView):
 
 
 class UserProfileEdit(LoginRequiredMixin, UpdateView):
-    """This view is destined to change user data"""
+    """
+    This view is destined to change user data
+    """
     model = User
     template_name = 'viperchat/user_edit.html'
     context_object_name = 'user'
@@ -615,7 +590,9 @@ class UserProfileEdit(LoginRequiredMixin, UpdateView):
     
 
 class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):
-    """This view is destined to change user password (you can do this by enter your old password)"""
+    """
+    This view is destined to change user password (you can do this by enter your old password)
+    """
     model = User
     template_name = 'viperchat/edit_password.html'
     context_object_name = 'user'
@@ -654,7 +631,9 @@ class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):
 
 
 class SearchUserOrRoom(FormView):
-    """This view is destined to search users and/or rooms"""
+    """
+    This view is destined to search users and/or rooms
+    """
     form_class = SearchForm
     template_name = 'viperchat/search_form.html'
 
@@ -676,7 +655,9 @@ class SearchUserOrRoom(FormView):
     
 
 class DeleteFriend(LoginRequiredMixin, View):
-    """View destined to delete friend from friendlist and from friends groups"""
+    """
+    View destined to delete friend from friendlist and from friends groups
+    """
     def get(self, request, *args, **kwargs):
         user_username = self.kwargs['username']
         user_to_remove = User.objects.get(username=user_username)
@@ -693,7 +674,9 @@ class DeleteFriend(LoginRequiredMixin, View):
         
         
 class FriendNotifiaction(LoginRequiredMixin, CreateView):
-    """Concerns only friend request notifcations"""
+    """
+    Concerns only friend request notifcations
+    """
     model = FriendRequest
     fields = []
 
@@ -729,7 +712,9 @@ class FriendNotifiaction(LoginRequiredMixin, CreateView):
 
 
 class NotificationList(LoginRequiredMixin, ListView):
-    """Show user's notifications"""
+    """
+    Show user's notifications
+    """
     model = Notification
 
     def get_context_data(self, *args, **kwargs):
@@ -746,7 +731,9 @@ class NotificationList(LoginRequiredMixin, ListView):
         
 
 class FriendRequestList(LoginRequiredMixin, ListView):
-    """Show user's friend requests"""
+    """
+    Show user's friend requests
+    """
     model = FriendRequest
 
     def get_context_data(self, *args, **kwargs):
@@ -763,7 +750,9 @@ class FriendRequestList(LoginRequiredMixin, ListView):
         
 
 class FriendRequestAnswer(LoginRequiredMixin, UpdateView):
-    """See friend request details and changes request status plus adding to friends or decline."""
+    """
+    See friend request details and changes request status plus adding to friends or decline.
+    """
     model = FriendRequest
     context_object_name = 'friend_request'
     fields = []
@@ -795,7 +784,9 @@ class FriendRequestAnswer(LoginRequiredMixin, UpdateView):
     
 
 class FriendRequestDelete(LoginRequiredMixin, DeleteView):
-    """Delete friend invitation"""
+    """
+    Delete friend invitation
+    """
     model = FriendRequest
 
     def get_object(self):

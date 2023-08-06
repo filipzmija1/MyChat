@@ -19,10 +19,13 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
     {% endif %}
    {% if request.user in deleters or request.user == message.author %} 
 | <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</li><br>
+{% check_if_logged_user_have_permission request.user server send_message_permission as message_permission %}
+{% if message_permission == True %}
 <form action="" method="POST">
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Send">
 </form>
+{% endif %}
 
 {% endblock %}
