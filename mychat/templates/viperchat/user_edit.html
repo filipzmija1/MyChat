@@ -10,5 +10,6 @@
     <input type="submit" value="Edit profile">
 </form>
 
-<a href="{% url 'change_password' user.username %}">Change password</a>
+<a href="{% url 'change_password' user.username %}">Change password</a><br>
+<a href="{% url 'change_profile_permissions' user.username %}">Change permissions</a><br>
 {% endblock %}

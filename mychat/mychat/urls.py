@@ -28,6 +28,7 @@ urlpatterns = [
     path('user/<slug:username>', vchat.UserProfile.as_view(), name='user_detail'),
     path('server/<uuid:server_id>/rooms/<uuid:pk>/edit', vchat.RoomEdit.as_view(), name='room_edit'),
     path('edit-user/<slug:username>', vchat.UserProfileEdit.as_view(), name='edit_profile'),
+    path('edit-user/<slug:username>/permissions', vchat.UserProfilePermissions.as_view(), name='change_profile_permissions'),
     path('change-passsword/<slug:username>', vchat.ChangePassword.as_view(), name='change_password'),
     path('search/', vchat.SearchUserOrRoom.as_view(), name='search'),
     path('delete-friend/<slug:username>', vchat.DeleteFriend.as_view(), name='delete_friend'),
@@ -49,6 +50,5 @@ urlpatterns = [
     path('server-groups/management/change/<uuid:pk>', vchat.ServerPermissionChange.as_view(), name='permissions_change'),
     path('user/<slug:username>/servers', vchat.UserServerList.as_view(), name='logged_user_servers'),
     path('user/<slug:username>/server/<uuid:server_id>/group/<slug:name>', vchat.UserGroupEdit.as_view(), name='user_group_edit'),
-
 
 ]

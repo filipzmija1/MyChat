@@ -1,7 +1,9 @@
 {% load template_filters %}
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <meta charset="UTF-8">
     <title>
         {% block title %}
@@ -9,7 +11,7 @@
         {% endblock %}
     </title>
 </head>
-<body>
+<body> <div id="weather" class="weather"></div>
     <a href="{% url 'home' %}">Home</a> | 
     <a href="{% url 'servers' %}">Servers</a> |
     <a href="{% url 'search' %}">Search</a> |
@@ -20,11 +22,14 @@
     {% else %}
         <a href="{% url 'account_login' %}">Login</a> | 
         <a href="{% url 'account_signup' %}">Register</a> |
+       
     {% endif %}
     <hr>
     {% block content %}
         <h1>{{ welcome }} </h1>
         <a href="{% url 'create_server' %}">Create your own server</a>
     {% endblock %}
+    <script src="{% static 'js/app.js' %}"></script>
 </body>
+
 </html>

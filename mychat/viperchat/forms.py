@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.forms import UserCreationForm, UserChangeForm
 from allauth.account.forms import SignupForm
 
-from .models import Room, ServerPermissionSettings, Server
+from .models import Room, ServerPermissionSettings, Server, UserPermissionSettings
 
 
 class UserCreationForm(UserCreationForm):
@@ -88,4 +88,11 @@ class ServerEditForm(forms.ModelForm):
         model = Server
         fields = ['description', 'is_private']
 
+
+class UserPermissionForm(forms.ModelForm):
+    class Meta:
+        model = UserPermissionSettings
+        fields = ['only_friends_see_your_profile', 'hide_email', 'hide_email', 'hide_first_name',
+                   'hide_surname', 'hide_friends', 'user'
+                  ]
 

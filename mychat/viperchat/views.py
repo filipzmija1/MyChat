@@ -19,12 +19,13 @@ from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
-from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings, Server
-from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm, ServerEditForm
+from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings, Server, UserPermissionSettings
+from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm, ServerEditForm, \
+                UserPermissionForm
 from .permissions import *
 from .context_processor import *
 from .utils import check_if_logged_user_can_delete_user, set_masters_permissions, initial_server_permissions, \
-            set_moderators_permissions, set_members_permissions, check_if_logged_user_can_change_users_group
+            set_moderators_permissions, set_members_permissions, check_if_logged_user_can_change_users_group, set_permission
 
 
 User = get_user_model()
@@ -514,7 +515,9 @@ class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
         return user
     
     def get_context_data(self, **kwargs):
-        """friend request display add friend or cancel friend request"""
+        """
+        friend request display add friend or cancel friend request
+        """
         context = super().get_context_data(**kwargs)
         friend_request = FriendRequest.objects.filter(sender=self.request.user, receiver=self.get_object())
         friend_request_mirror = FriendRequest.objects.filter(sender=self.get_object(), receiver=self.request.user)
@@ -568,7 +571,7 @@ class MessageEdit(LoginRequiredMixin, UpdateView):
             return reverse('user_detail', kwargs={'username': message.message_receiver.username})
 
 
-class UserProfileEdit(LoginRequiredMixin, UpdateView):
+class UserProfileEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     """
     This view is destined to change user data
     """
@@ -577,17 +580,40 @@ class UserProfileEdit(LoginRequiredMixin, UpdateView):
     context_object_name = 'user'
     fields = ['first_name', 'last_name']
 
-    def get_object(self, queryset=None):
+    def test_func(self):
         username = self.kwargs['username']
-        user = User.objects.get(username=username)
         logged_user = self.request.user
         if username != logged_user.username:
             raise PermissionDenied
+        else:
+            return True
+
+    def get_object(self, queryset=None):
+        username = self.kwargs['username']
+        user = User.objects.get(username=username)
         return user
     
     def get_success_url(self):
         return reverse('user_detail', kwargs={'username': self.request.user.username})
+
+
+class UserProfilePermissions(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = UserPermissionSettings
+    template_name = 'viperchat/user_permissions.html'
+    form_class = UserPermissionForm
+
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        if user == self.request.user:
+            return True
+        raise PermissionDenied
     
+    def get_object(self):
+        user_permission_settings = UserPermissionSettings.objects.get(user=self.request.user)
+        return user_permission_settings
+    
+# TODO: profile permisssions
+
 
 class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):
     """
