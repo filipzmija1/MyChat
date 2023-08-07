@@ -19,9 +19,10 @@ from django.contrib import messages
 from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
-from .models import Room, Notification, FriendRequest, RoomInvite, Message, ServerPermissionSettings, Server, UserPermissionSettings
+from .models import Room, Notification, FriendRequest, ServerInvite, Message, ServerPermissionSettings, Server, \
+                 UserPermissionSettings
 from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm, ServerEditForm, \
-                UserPermissionForm
+                UserPermissionForm, SearchUserForm
 from .permissions import *
 from .context_processor import *
 from .utils import check_if_logged_user_can_delete_user, set_masters_permissions, initial_server_permissions, \
@@ -207,12 +208,11 @@ class ServerList(ListView):
     model = Server
     paginate_by = 20
 
-
 class JoinServer(LoginRequiredMixin, UpdateView):
     """
     Allows user to join to public room
     """
-    model = Room
+    model = Server
 
     def get_object(self, *args, **kwargs):
         server_id = self.kwargs['pk']
@@ -229,7 +229,53 @@ class JoinServer(LoginRequiredMixin, UpdateView):
             return redirect(reverse('server_detail', kwargs={'pk': server.pk}))
         else:
             raise PermissionDenied
+
+
+class ServerInvite(LoginRequiredMixin, CreateView):
+    """
+    Create invitation to public server
+    """
+    model = ServerInvite
+    template_name = 'viperchat/server_invite.html'
+    fields = []
+
+    def get_object(self):
+        server = Server.objects.get(id=self.kwargs['server_id'])
+        return server
+
+
+class SearchUserToInvite(LoginRequiredMixin, UserPassesTestMixin, FormView):
+    """
+    This view is destined to search users and/or rooms
+    """
+    template_name = 'viperchat/server_invite.html'
+    form_class = SearchUserForm
     
+    def test_func(self):
+        invite_to_server_permission = Permission.objects.get(codename='send_invitation')
+        server_groups = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
+        user_group = [group for group in server_groups if self.request.user in group.user_set.all()][0]
+        if invite_to_server_permission in user_group.permissions.all():
+            return True
+        raise PermissionDenied
+
+    def get_object(self):
+        server = Server.objects.get(id=self.kwargs['pk'])
+        return server
+
+    def form_valid(self, form):
+        search_value = form.cleaned_data['search']
+        search_result = None
+        if search_value:
+            search_result = User.objects.filter(username__startswith=search_value)
+        return render(self.request, 'viperchat/server_invite.html', self.get_context_data(form=form, result=search_result))
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['server'] = self.get_object()
+        context['server_groups'] = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
+        return context
+
 
 class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView):
     """
@@ -500,7 +546,7 @@ class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             raise PermissionDenied
 
 
-class UserProfile(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView):
+class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
     """
     Shows user profile
     """
@@ -508,16 +554,6 @@ class UserProfile(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView
     template_name = 'viperchat/user_profile.html'
     context_object_name = 'user'
     form_class = SendMessageForm
-
-    def test_func(self):
-        display_profile_setting = UserPermissionSettings.objects.get(user=self.get_object())
-        if self.request.user == self.get_object() or \
-        display_profile_setting.everyone_see_your_profile == 'Allowed' or \
-        display_profile_setting.everyone_see_your_profile == 'Forbidden' and self.request.user in self.get_object().friends.all(): 
-            return True
-        else:
-            raise PermissionDenied
-
 
     def get_object(self, queryset=None):
         username = self.kwargs['username']
@@ -531,6 +567,8 @@ class UserProfile(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView
         context = super().get_context_data(**kwargs)
         friend_request = FriendRequest.objects.filter(sender=self.request.user, receiver=self.get_object())
         friend_request_mirror = FriendRequest.objects.filter(sender=self.get_object(), receiver=self.request.user)
+        user_profile_settings = UserPermissionSettings.objects.get(user=self.get_object())
+        context['user_settings'] = user_profile_settings
         context['friend_request'] = friend_request
         context['friend_request_mirror'] = friend_request_mirror
         if self.request.user in self.get_object().friends.all():    # Display chat

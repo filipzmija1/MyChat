@@ -79,6 +79,7 @@ TEMPLATES = [
                 'viperchat.context_processor.get_server_list',
                 'viperchat.context_processor.get_edit_permissions',
                 'viperchat.context_processor.get_delete_user',
+                'viperchat.context_processor.get_send_invite_permission',
             ],
         },
     },

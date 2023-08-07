@@ -106,7 +106,7 @@ def set_masters_permissions(server_model_instance):
     for permission, value in masters_settings.items():
         if permission == 'masters_create_room':
             set_permission(value, masters_group, add_create_room_in_server_permission, remove_create_room_in_server_permission)
-        if permission == 'masters_send_invitation_to_group':
+        if permission == 'masters_send_invitation_to_server':
             set_permission(value, masters_group, add_send_invitation_permission, remove_send_invitation_permission)
         if permission == 'masters_delete_user':
             set_permission(value, masters_group, add_delete_user_from_server_permission, remove_delete_user_from_server_permission)
@@ -138,7 +138,7 @@ def set_moderators_permissions(server_model_instance):
     for permission, value in moderators_settings.items():
         if permission == 'moderators_create_room':
             set_permission(value, moderators_group, add_create_room_in_server_permission, remove_create_room_in_server_permission)
-        if permission == 'moderators_send_invitation_to_group':
+        if permission == 'moderators_send_invitation_to_server':
             set_permission(value, moderators_group, add_send_invitation_permission, remove_send_invitation_permission)
         if permission == 'moderators_delete_user':
             set_permission(value, moderators_group, add_delete_user_from_server_permission, remove_delete_user_from_server_permission)
@@ -165,7 +165,7 @@ def set_members_permissions(server_model_instance):
     for permission, value in members_settings.items():
         if permission == 'members_create_room':
             set_permission(value, members_group, add_create_room_in_server_permission, remove_create_room_in_server_permission)
-        if permission == 'members_send_invitation_to_group':
+        if permission == 'members_send_invitation_to_server':
             set_permission(value, members_group, add_send_invitation_permission, remove_send_invitation_permission)
         if permission == 'members_delete_messages':
             set_permission(value, members_group, add_delete_message_permission, remove_delete_message_permission)

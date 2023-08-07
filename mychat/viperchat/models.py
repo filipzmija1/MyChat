@@ -38,7 +38,7 @@ class ServerPermissionSettings(models.Model):
     )
     #   Masters permissions
     masters_create_room = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    masters_send_invitation_to_group = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    masters_send_invitation_to_server = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     masters_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
@@ -49,14 +49,14 @@ class ServerPermissionSettings(models.Model):
     moderators_create_room = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     moderators_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_delete_user = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
-    moderators_send_invitation_to_group = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    moderators_send_invitation_to_server = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     moderators_can_see_private_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     moderators_can_edit_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     #   Members permissions
     members_create_room = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     members_delete_messages = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
-    members_send_invitation_to_group = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
+    members_send_invitation_to_server = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     members_send_messages = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     members_can_see_private_rooms = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
 
@@ -172,18 +172,18 @@ class FriendRequest(models.Model):
     status = models.CharField(choices=CHOICES, max_length=64, default='waiting')
 
 
-class RoomInvite(models.Model):
+class ServerInvite(models.Model):
     id = models.UUIDField(
     default=uuid.uuid4,
     unique=True,
     primary_key=True,
     editable=False
 )
-    room = models.ForeignKey(Room, on_delete=models.CASCADE)
-    invited_user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invited_user')
+    server = models.ForeignKey(Server, on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitation_receiver')
     invitation_sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitation_sender')
     accepted = models.BooleanField(default=False)
     class Meta:
         permissions = [
-            ("send_invitation", "Can send invitations to private room"),
+            ("send_invitation", "Can send invitations to private servers"),
         ]

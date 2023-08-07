@@ -29,3 +29,7 @@ def get_edit_permissions(request):
 def get_delete_user(request):
     permission = Permission.objects.get(codename='delete_user_from_server')
     return {'delete_users_permission': permission}
+
+def get_send_invite_permission(request):
+    permission = Permission.objects.get(codename='send_invitation')
+    return {'send_invitation_permission': permission}

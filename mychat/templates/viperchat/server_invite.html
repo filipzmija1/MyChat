@@ -1,0 +1,18 @@
+{% include 'viperchat/server_detail.html' %}
+
+{% block room %}
+<h2>Search user to invite</h2>
+<form action="" method="POST">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <input type="submit" value="Search">
+</form><br>
+{% if result %}
+    {% for user in result %}
+        {% if user in server.users.all %}
+        {% else %}
+        {{ user.username }} <br>
+        {% endif %}
+    {% endfor %}
+{% endif %}
+{% endblock %}

@@ -13,11 +13,13 @@
 <a href="{% url 'server_groups_management' server.id %}"><button>Manage permissions</button></a> | 
 {% endif %}
 {% if request.user in group|group_users and delete_users_permission in group.permissions.all %}
-<a href="{% url 'server_users_list' server.id %}"><button>Manage users</button> </a>
+<a href="{% url 'server_users_list' server.id %}"><button>Manage users</button> </a> |
 {% endif %}
-
-
+{% if request.user in group|group_users and send_invitation_permission in group.permissions.all %}
+<a href="{%url 'server_invite' server.id %}"><button>Invite to server</button></a> |
+{% endif %}
 {% endfor %}
+
 <br>
 About server: {{ server.description }}<br>
 {% if request.user in server.users.all %}

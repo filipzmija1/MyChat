@@ -31,14 +31,25 @@
     <a href="{% url 'friend_notification' user.username %}">Add friend</a><br>
 {% endif %}
 {% endif %}
+
 Username: {{ user.username }} <br>
+{% if request.user == user or user_settings.everyone_see_your_profile == 'Forbidden' and request.user in user.friends.all or user_settings.everyone_see_your_profile == 'Allowed' %}
+{% if request.user == user or user_settings.hide_email == 'Forbidden' %}
 Email: {{ user.email }}<br>
+{% endif %}
+{% if request.user == user or user_settings.hide_first_name == 'Forbidden' %}
 First name: {{ user.first_name }}<br>
+{% endif %}
+{% if request.user == user or user_settings.hide_surname == 'Forbidden' %}
 Surname: {{ user.last_name }}<br>
+{% endif %}
+{% if request.user == user or user_settings.hide_friends == 'Forbidden' %}
 Friends: <br>{% for friend in user.friends.all %}
             <a href="{% url 'user_detail' friend.username %}">{{ friend.username }} </a>{% if request.user == user %}| 
                  <a href="{% url 'delete_friend' friend.username %}">Delete friend</a>{% endif %}<br>
         {% endfor %}
+{% endif %}
+
 <br>
 {% if chat %}
 {% for message in chat %}
@@ -50,12 +61,14 @@ Friends: <br>{% for friend in user.friends.all %}
 {% endfor %}
 {% endif %}
 {% if request.user != user %}
+{% if request.user in user.friends.all %}
 <form method="POST" action="">
     {% csrf_token %}
     {{ form.as_p }}
     <input type="submit" value="Send">
 </form>
 {% endif %}
-
+{% endif %}
+{% endif %}
 
 {% endblock %}

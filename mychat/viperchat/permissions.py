@@ -2,7 +2,7 @@ from django.contrib.auth.models import Group, Permission
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth import get_user_model
 
-from .models import Message, Room, RoomInvite, Server
+from .models import Message, Room, ServerInvite, Server
 
 User = get_user_model()
 
@@ -106,13 +106,13 @@ def add_delete_message_permission(group):
 
 
 def remove_send_invitation_permission(group):
-    send_invite_content_type = ContentType.objects.get_for_model(RoomInvite)
+    send_invite_content_type = ContentType.objects.get_for_model(ServerInvite)
     permission = Permission.objects.get(codename='send_invitation', content_type=send_invite_content_type)
     return group.permissions.remove(permission)
 
 
 def add_send_invitation_permission(group):
-    send_invite_content_type = ContentType.objects.get_for_model(RoomInvite)
+    send_invite_content_type = ContentType.objects.get_for_model(ServerInvite)
     permission = Permission.objects.get(codename='send_invitation', content_type=send_invite_content_type)
     group.permissions.add(permission)
     return group.save()
