@@ -627,6 +627,45 @@ class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
             return redirect(reverse('user_detail', kwargs={'username': self.get_object().username}))
         
 
+class UserServerInvitesList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """"
+    Display user's server join requests
+    """
+    model = ServerInvite
+    template_name = 'viperchat/server_invites_list.html'
+    context_object_name = 'invites'
+
+    def test_func(self):
+        if self.get_object() == self.request.user:
+            return True
+        raise PermissionDenied
+    
+    def get_object(self):
+        username = self.kwargs['username']
+        user = User.objects.get(username=username)
+        return user
+    
+    def get_queryset(self):
+        invites = ServerInvite.objects.filter(receiver=self.get_object())
+        return invites
+    
+
+class ServerInviteDetail(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = ServerInvite
+    template_name = 'viperchat/server_invite_list.html'
+    context_object_name = 'invite'
+
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        if self.request.user == user:
+            return True
+        raise PermissionDenied
+    
+    def get_object(self):
+        invite = ServerInvite.objects.get(id=self.kwargs['pk'])
+        return invite
+
+
 class MessageEdit(LoginRequiredMixin, UpdateView):
     model = Message
     template_name = 'viperchat/message_edit.html'

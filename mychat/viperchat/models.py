@@ -140,6 +140,7 @@ class Message(models.Model):
     def __str__(self):
         return self.content
 
+
 class Notification(models.Model):
     id = models.UUIDField(
         default=uuid.uuid4,

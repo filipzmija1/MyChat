@@ -23,4 +23,6 @@ def create_invite_notification(sender, instance, created, *args, **kwargs):
     """
     Creates notification after room invite send
     """
-    pass
+    if created:
+        description = f'{instance.invitation_sender} sent you invite to {instance.server} server.'
+        Notification.objects.create(description=description, receiver=instance.receiver)

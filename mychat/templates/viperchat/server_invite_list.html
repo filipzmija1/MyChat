@@ -1,0 +1,9 @@
+{% extends 'viperchat/base.html' %}
+
+{% block title %}Invite details {% endblock %}
+
+{% block content %}
+Server: {{ invite.server }} <br>
+Sender: {{ invite.invitation_sender }}<br>
+<button>Accept</button><button>Decline</button>
+{% endblock %}

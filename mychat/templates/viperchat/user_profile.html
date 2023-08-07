@@ -13,7 +13,8 @@
 <a href="{% url 'edit_profile' user.username %}">Edit profile</a> |
 <a href="{% url 'notification_list' user.username %}">Notifications</a> |
 <a href="{% url 'friend_request_list' user.username %}">Friend requests</a> |
-<a href="{% url 'logged_user_servers' user.username %}">Your servers</a><br>
+<a href="{% url 'user_server_invites' user.username %}">Server requests</a> |
+<a href="{% url 'logged_user_servers' user.username %}">Your servers</a> | <br>
 {% else %}
 {% if friend_request.exists %}
     {% for request in friend_request %}
