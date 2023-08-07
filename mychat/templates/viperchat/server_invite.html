@@ -1,4 +1,5 @@
 {% include 'viperchat/server_detail.html' %}
+{% load template_filters %}
 
 {% block room %}
 <h2>Search user to invite</h2>
@@ -11,7 +12,23 @@
     {% for user in result %}
         {% if user in server.users.all %}
         {% else %}
-        {{ user.username }} <br>
+        {{ user.username }} 
+        {% if server_invites %}
+            {% for invite in server_invites %}
+                {% if invite.receiver == user %}
+                    {% if request.user == invite.invitation_sender %}
+                        <a href="{% url 'delete_server_invite' pk=server.id username=user.username invite_id=invite.id %}"><button>Delete invitation</button></a>
+                    {% else %}
+                        ---- Already invited
+                    {% endif %}
+                {% else %}
+                    <a href="{% url 'send_server_invite' pk=server.id username=user.username %}"><button>Send invitation</button></a>
+                {% endif %}
+            {% endfor %}
+        {% else %}
+            <a href="{% url 'send_server_invite' pk=server.id username=user.username %}"><button>Send invitation</button></a>
+        {% endif %}
+         <br>
         {% endif %}
     {% endfor %}
 {% endif %}

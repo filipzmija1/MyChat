@@ -187,3 +187,6 @@ class ServerInvite(models.Model):
         permissions = [
             ("send_invitation", "Can send invitations to private servers"),
         ]
+    
+    def __str__(self):
+        return f'server: {self.server.name} receiver: {self.receiver.username}'

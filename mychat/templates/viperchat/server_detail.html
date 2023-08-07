@@ -4,6 +4,11 @@
 
 {% block content %}
 <h2><a href="{% url 'server_detail' server.id %}">{{ server.name }}</a> </h2>
+{% if messages %}
+    {% for message in messages %}
+        <span style='color:green'>{{ message }}</span>
+    {% endfor %}
+{% endif %}
 {% for group in server_groups %}
 {% if request.user in group|group_users and create_permission in group.permissions.all %}
 <a href="{% url 'create_room' server.id %}"><button>Create room</button></a> | 

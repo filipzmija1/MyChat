@@ -208,6 +208,7 @@ class ServerList(ListView):
     model = Server
     paginate_by = 20
 
+
 class JoinServer(LoginRequiredMixin, UpdateView):
     """
     Allows user to join to public room
@@ -231,22 +232,58 @@ class JoinServer(LoginRequiredMixin, UpdateView):
             raise PermissionDenied
 
 
-class ServerInvite(LoginRequiredMixin, CreateView):
+class ServerInviteSend(LoginRequiredMixin, UserPassesTestMixin, CreateView):
     """
     Create invitation to public server
     """
     model = ServerInvite
-    template_name = 'viperchat/server_invite.html'
-    fields = []
+
+    def test_func(self):
+        invite_to_server_permission = Permission.objects.get(codename='send_invitation')
+        server_groups = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
+        invite_receiver = User.objects.get(username=self.kwargs['username'])
+        user_group = [group for group in server_groups if self.request.user in group.user_set.all()][0]
+        invite = ServerInvite.objects.filter(server=self.get_object(), receiver=invite_receiver)
+        #   Check if server invite already exists
+        if invite:
+            raise PermissionDenied
+        if invite_to_server_permission in user_group.permissions.all():
+            return True
+        if invite_receiver in self.object().users.all():
+            raise PermissionDenied
+        raise PermissionDenied
 
     def get_object(self):
-        server = Server.objects.get(id=self.kwargs['server_id'])
+        server = Server.objects.get(id=self.kwargs['pk'])
         return server
+
+    def get(self, *args, **kwargs):
+        invite_receiver = User.objects.get(username=self.kwargs['username'])
+        ServerInvite.objects.create(server=self.get_object(), invitation_sender=self.request.user, receiver=invite_receiver)
+        return redirect(reverse('server_invite', kwargs={'pk': self.get_object().id}))
+
+
+class ServerInviteDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    """
+    Only invitation sender is able to delete server invitations
+    """
+    model = ServerInvite
+
+    def test_func(self):
+        invite = ServerInvite.objects.get(id=self.kwargs['invite_id'])
+        if invite.invitation_sender == self.request.user:
+            return True
+        raise PermissionDenied
+    
+    def get(self, *args, **kwargs):
+        invite = ServerInvite.objects.get(id=self.kwargs['invite_id'])
+        invite.delete()
+        return redirect(reverse('server_invite', kwargs={'pk': self.kwargs['pk']}))
 
 
 class SearchUserToInvite(LoginRequiredMixin, UserPassesTestMixin, FormView):
     """
-    This view is destined to search users and/or rooms
+    This view is destined to search users for invite them
     """
     template_name = 'viperchat/server_invite.html'
     form_class = SearchUserForm
@@ -272,6 +309,7 @@ class SearchUserToInvite(LoginRequiredMixin, UserPassesTestMixin, FormView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['server_invites'] = ServerInvite.objects.filter(server=self.get_object())
         context['server'] = self.get_object()
         context['server_groups'] = Group.objects.filter(name__startswith=f'{self.get_object().name}_')
         return context
@@ -541,7 +579,7 @@ class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             members_group.user_set.remove(user_to_delete)
             moderators_group.user_set.remove(user_to_delete)
             server.users.remove(user_to_delete)
-            return redirect(reverse('server_users_list', kwargs={'pk': server_id}))
+            return redirect(reverse('server_users_list', kwargs={'server_id': server_id}))
         else:
             raise PermissionDenied
 
@@ -861,8 +899,15 @@ class FriendRequestAnswer(LoginRequiredMixin, UpdateView):
             sender_friends_group.user_set.add(self.request.user)
             friends_group.user_set.add(friend_request.sender)
             self.request.user.friends.add(friend_request.sender)
+            #   Create accepted request notification
+            Notification.objects.create(
+                description=f'{self.request.user} has accepted your friend invite.', 
+                receiver=friend_request.sender)
         elif 'decline_button' in self.request.POST:
             friend_request.status = 'canceled'
+            Notification.objects.create(
+                description=f'{self.request.user} has declined your friend invite.',
+                receiver=friend_request.sender)
         form.save()
         friend_request.delete()
         return redirect('user_detail', username=self.request.user.username)

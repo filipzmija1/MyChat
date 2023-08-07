@@ -2,7 +2,7 @@ from django import template
 from django.contrib.auth.models import Group, Permission
 
 from viperchat.utils import check_if_logged_user_can_delete_user, check_if_logged_user_can_change_users_group
-
+from viperchat.models import ServerInvite
 
 register = template.Library()
 
@@ -74,6 +74,15 @@ def check_if_logged_user_have_edit_room_permission(logged_user, server):
     user_group = [group for group in server_groups if logged_user in group.user_set.all()]
     permission = Permission.objects.get(codename='edit_rooms_in_server')
     if permission in user_group[0].permissions.all():
+        return True
+    else:
+        return False
+    
+
+@register.simple_tag
+def check_if_room_invite_exist(receiver, server):
+    server_invite = ServerInvite.objects.get(receiver=receiver, server=server)
+    if server_invite:
         return True
     else:
         return False
