@@ -500,7 +500,7 @@ class DeleteUserFromServer(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
             raise PermissionDenied
 
 
-class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
+class UserProfile(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView):
     """
     Shows user profile
     """
@@ -508,6 +508,16 @@ class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
     template_name = 'viperchat/user_profile.html'
     context_object_name = 'user'
     form_class = SendMessageForm
+
+    def test_func(self):
+        display_profile_setting = UserPermissionSettings.objects.get(user=self.get_object())
+        if self.request.user == self.get_object() or \
+        display_profile_setting.everyone_see_your_profile == 'Allowed' or \
+        display_profile_setting.everyone_see_your_profile == 'Forbidden' and self.request.user in self.get_object().friends.all(): 
+            return True
+        else:
+            raise PermissionDenied
+
 
     def get_object(self, queryset=None):
         username = self.kwargs['username']
@@ -611,8 +621,19 @@ class UserProfilePermissions(LoginRequiredMixin, UserPassesTestMixin, UpdateView
     def get_object(self):
         user_permission_settings = UserPermissionSettings.objects.get(user=self.request.user)
         return user_permission_settings
-    
-# TODO: profile permisssions
+
+    def form_valid(self, form):
+        user_profile_display_permission_setting = form.cleaned_data['everyone_see_your_profile']
+        only_friend_see_profile_permission = Permission.objects.get(codename='friends_see_profile')
+        if user_profile_display_permission_setting == 'Allowed':
+            self.request.user.user_permissions.remove(only_friend_see_profile_permission)
+        if user_profile_display_permission_setting == 'Forbidden':
+            self.request.user.user_permissions.add(only_friend_see_profile_permission)
+        form.save()
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return reverse('edit_profile', kwargs={'username': self.get_object().user.username})
 
 
 class ChangePassword(LoginRequiredMixin, SuccessMessageMixin, FormView):

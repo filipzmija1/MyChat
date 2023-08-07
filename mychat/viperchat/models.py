@@ -20,7 +20,7 @@ class UserPermissionSettings(models.Model):
         ('Allowed', 'Allowed'),
         ('Forbidden', 'Forbidden'),
     )
-    only_friends_see_your_profile = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
+    everyone_see_your_profile = models.CharField(max_length=20, choices=CHOICES, default='Allowed')
     hide_email = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     hide_first_name = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')
     hide_surname = models.CharField(max_length=20, choices=CHOICES, default='Forbidden')

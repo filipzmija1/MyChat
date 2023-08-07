@@ -92,7 +92,7 @@ class ServerEditForm(forms.ModelForm):
 class UserPermissionForm(forms.ModelForm):
     class Meta:
         model = UserPermissionSettings
-        fields = ['only_friends_see_your_profile', 'hide_email', 'hide_email', 'hide_first_name',
-                   'hide_surname', 'hide_friends', 'user'
+        fields = ['everyone_see_your_profile', 'hide_email', 'hide_email', 'hide_first_name',
+                   'hide_surname', 'hide_friends'
                   ]
 
