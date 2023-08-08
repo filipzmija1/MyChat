@@ -1,10 +1,8 @@
-{% extends 'viperchat/base.html' %}
+{% include 'viperchat/notifications.html' %}
 
-{% block title %} Notifications {% endblock %}
 
-{% block content %}
-<h2>Notifications</h2>
-
+{% block notifications %}
+<h2>All Notifications</h2>
 {% for notification in notifications %}
 <li>{{ notification.description }} - {{ notification.date_created }} </li>
 {% endfor %}

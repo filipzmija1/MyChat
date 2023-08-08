@@ -33,7 +33,12 @@ urlpatterns = [
     path('search/', vchat.SearchUserOrRoom.as_view(), name='search'),
     path('delete-friend/<slug:username>', vchat.DeleteFriend.as_view(), name='delete_friend'),
     path('friend-request/<slug:username>', vchat.FriendNotifiaction.as_view(), name='friend_notification'),
+    path('user/<slug:username>/notifications/navigator', vchat.Notifications.as_view(), name='notifications'),
     path('user/<slug:username>/notifications', vchat.NotificationList.as_view(), name='notification_list'),
+    path('user/<slug:username>/notifications-unread', vchat.NotificationUnreadList.as_view(), name='notification_unread_list'),
+    path('user/<slug:username>/notifications-read', vchat.NotificationsReadList.as_view(), name='notification_read_list'),
+    path('user/<slug:username>/notification-detail/<uuid:pk>', vchat.NotificationDetail.as_view(), name='notification_detail'),
+    path('user/<slug:username>/notification/change/<uuid:pk>', vchat.NotificationUpdate.as_view(), name='notification_update'),
     path('user/<slug:username>/friend-requests', vchat.FriendRequestList.as_view(), name='friend_request_list'),
     path('friend-requests/<uuid:pk>', vchat.FriendRequestAnswer.as_view(), name='friend_request_detail'),
     path('request-delete/<uuid:pk>', vchat.FriendRequestDelete.as_view(), name='friend_request_delete'),
@@ -56,5 +61,5 @@ urlpatterns = [
     path('user/<slug:username>/server-invites', vchat.UserServerInvitesList.as_view(), name='user_server_invites'),
     path('user/<slug:username>/server-invites/<uuid:pk>', vchat.ServerInviteDetail.as_view(), name='server_invite_detail'),
     path('user/<slug:username>/server-invites/<uuid:pk>/delete', vchat.ServerInviteDelete.as_view(), name='server_invite_delete'),
-    
+
 ]

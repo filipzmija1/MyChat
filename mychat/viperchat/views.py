@@ -673,6 +673,7 @@ class ServerInviteDetail(LoginRequiredMixin, UserPassesTestMixin, DetailView):
         if 'decline_button' in self.request.POST:
             invite.status = 'declined'
         invite.save()
+        #   Refresh for signals work
         invite.refresh_from_db() 
         invite.delete()
         return redirect('user_server_invites', username=self.request.user.username)
@@ -904,6 +905,102 @@ class NotificationList(LoginRequiredMixin, ListView):
             return context
         
 
+class NotificationUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Changes notification is_read status
+    """
+    model = Notification
+
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        if user == self.request.user:
+            return True
+        raise PermissionDenied
+    
+    def get_object(self):
+        notification = Notification.objects.get(id=self.kwargs['pk'])
+        return notification
+
+    def get(self, request, *args, **kwargs):
+        notification = self.get_object()
+        if notification.is_read == True:
+            notification.is_read = False
+            notification.refresh_from_db
+            return render(reverse('notification_list', kwargs={'username': self.request.user.username, 
+                                                               'pk': self.get_object().id} ))
+        else:
+            notification.is_read = True
+            notification.refresh_from_db
+            return render(reverse('notification_list', kwargs={'username': self.request.user.username, 
+                                                               'pk': self.get_object().id} ))
+
+
+class NotificationsReadList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """
+    Display notifications already read
+    """
+    model = Notification
+    template_name = 'viperchat/notification_read_list.html'
+
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        if user == self.request.user:
+            return True
+        raise PermissionDenied
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        notifications = Notification.objects.filter(receiver=self.request.user)
+        context['notifications'] = notifications
+        return context
+    
+
+class Notifications(LoginRequiredMixin, UserPassesTestMixin, View):
+    """
+    Navigate through Notifications
+    """
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        if user == self.request.user:
+            return True
+        raise PermissionDenied
+    
+    def get(self, request,  *args, **kwargs):
+        notifications = Notification.objects.filter(receiver=self.request.user)
+        return render(request, 'viperchat/notifications.html', {'notifications': notifications})
+
+
+class NotificationUnreadList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    model = Notification
+    template_name = 'viperchat/notification_unread_list.html'
+
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        if user == self.request.user:
+            return True
+        raise PermissionDenied
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        notifications = Notification.objects.filter(receiver=self.request.user)
+        context['notifications'] = notifications
+        return context
+    
+
+class NotificationDetail(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Notification
+    context_object_name = 'notification'
+
+    def test_func(self):
+        if self.request.user == self.get_object().receiver:
+            return True
+        raise PermissionDenied
+
+    def get_object(self):
+        notification = Notification.objects.get(id=self.kwargs['pk'])
+        return notification
+    
+
 class FriendRequestList(LoginRequiredMixin, ListView):
     """
     Show user's friend requests
@@ -986,17 +1083,3 @@ class FriendRequestDelete(LoginRequiredMixin, DeleteView):
         self.get_object().delete()
         return redirect('user_detail', username=receiver.username)
     
-
-# class RoomInvite(LoginRequiredMixin, CreateView):
-#     """Send notification to private room creator's friends for join the room"""
-#     model = RoomInvite
-    
-#     def get_object(self, request, *args, **kwargs):
-#         room_id = self.kwargs['pk']
-#         room = Room.objects.get(id=room_id)
-#         return room
-
-#     def get(self, *args, **kwargs):
-#         logged_user = self.request.user
-#         room = self.get_object()
-#         pass

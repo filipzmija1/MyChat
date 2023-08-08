@@ -4,7 +4,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import Permission
 from django.contrib.auth import get_user
 
-from .models import UserPermissionSettings, ServerInvite, Notification
+from .models import UserPermissionSettings, ServerInvite, Notification, Message
 
 
 User = get_user_model()

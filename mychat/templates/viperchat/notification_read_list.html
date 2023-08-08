@@ -1,0 +1,15 @@
+{% include 'viperchat/notifications.html' %}
+
+{% block notifications %}
+<h2>Already read notifications</h2>
+{% for notification in notifications %}
+<li>
+    {% if notification.is_read == True %}
+    Description: {{ notification.description }} <br>
+    <a href="{% url 'notification_detail' username=request.user.username pk=notification.id %}"><button>Details</button></a><br>
+    ---------------------------------------------
+    {% endif %}
+</li>
+
+{% endfor %}
+{% endblock %}
