@@ -153,6 +153,9 @@ class Notification(models.Model):
     receiver = models.ForeignKey(User, on_delete=models.CASCADE)
     is_read = models.BooleanField(default=False)
 
+    def __str__(self):
+        return self.description
+
 
 class FriendRequest(models.Model):
     CHOICES = (
@@ -174,6 +177,13 @@ class FriendRequest(models.Model):
 
 
 class ServerInvite(models.Model):
+    CHOICES = (
+        ('waiting', 'waiting'),
+        ('accepted', 'accepted'),
+        ('declined', 'declined'),
+    )
+
+
     id = models.UUIDField(
     default=uuid.uuid4,
     unique=True,
@@ -183,7 +193,7 @@ class ServerInvite(models.Model):
     server = models.ForeignKey(Server, on_delete=models.CASCADE)
     receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitation_receiver')
     invitation_sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name='invitation_sender')
-    accepted = models.BooleanField(default=False)
+    status = models.CharField(choices=CHOICES, max_length=64, default='waiting')
     class Meta:
         permissions = [
             ("send_invitation", "Can send invitations to private servers"),

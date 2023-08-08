@@ -228,4 +228,3 @@ def check_if_logged_user_can_change_users_group(logged_user, user_to_change, ser
                 return False
             else:
                 return True
-        

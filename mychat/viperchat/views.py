@@ -664,6 +664,18 @@ class ServerInviteDetail(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     def get_object(self):
         invite = ServerInvite.objects.get(id=self.kwargs['pk'])
         return invite
+    
+    def post(self, request,*args, **kwargs):
+        invite = self.get_object()
+        if 'accept_button' in self.request.POST:
+            invite.server.users.add(self.request.user)
+            invite.status = 'accepted'
+        if 'decline_button' in self.request.POST:
+            invite.status = 'declined'
+        invite.save()
+        invite.refresh_from_db() 
+        invite.delete()
+        return redirect('user_server_invites', username=self.request.user.username)
 
 
 class MessageEdit(LoginRequiredMixin, UpdateView):
@@ -929,7 +941,9 @@ class FriendRequestAnswer(LoginRequiredMixin, UpdateView):
             return friend_request
         
     def form_valid(self, form):
-        """If user accepts """
+        """
+        If user accepts
+          """
         friend_request = form.instance
         if 'accept_button' in self.request.POST:
             friend_request.status = 'accepted'

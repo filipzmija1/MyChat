@@ -55,5 +55,6 @@ urlpatterns = [
     path('server/<uuid:pk>/invite/<slug:username>/delete/<uuid:invite_id>', vchat.ServerInviteDelete.as_view(), name='delete_server_invite'),
     path('user/<slug:username>/server-invites', vchat.UserServerInvitesList.as_view(), name='user_server_invites'),
     path('user/<slug:username>/server-invites/<uuid:pk>', vchat.ServerInviteDetail.as_view(), name='server_invite_detail'),
-
+    path('user/<slug:username>/server-invites/<uuid:pk>/delete', vchat.ServerInviteDelete.as_view(), name='server_invite_delete'),
+    
 ]
