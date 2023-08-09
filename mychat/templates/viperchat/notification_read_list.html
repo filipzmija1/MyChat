@@ -6,7 +6,8 @@
 <li>
     {% if notification.is_read == True %}
     Description: {{ notification.description }} <br>
-    <a href="{% url 'notification_detail' username=request.user.username pk=notification.id %}"><button>Details</button></a><br>
+    <a href="{% url 'notification_update' username=request.user.username pk=notification.id %}">
+        <button>Details</button></a> <a href=""></a><br>
     ---------------------------------------------
     {% endif %}
 </li>

@@ -923,16 +923,33 @@ class NotificationUpdate(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
 
     def get(self, request, *args, **kwargs):
         notification = self.get_object()
+        if notification.is_read == False:
+            notification.is_read = True
+        notification.save()
+        return redirect(reverse('notification_detail', kwargs={'username': self.request.user.username,
+                                                             'pk': notification.id}))
+
+
+class NotificationSetUnread(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Set notification to unread
+    """
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        if user == self.request.user:
+            return True
+        raise PermissionDenied
+    
+    def get_object(self):
+        notification = Notification.objects.get(id=self.kwargs['pk'])
+        return notification
+
+    def get(self, request, *args, **kwargs):
+        notification = self.get_object()
         if notification.is_read == True:
             notification.is_read = False
-            notification.refresh_from_db
-            return render(reverse('notification_list', kwargs={'username': self.request.user.username, 
-                                                               'pk': self.get_object().id} ))
-        else:
-            notification.is_read = True
-            notification.refresh_from_db
-            return render(reverse('notification_list', kwargs={'username': self.request.user.username, 
-                                                               'pk': self.get_object().id} ))
+        notification.save()
+        return redirect(reverse('notification_list', kwargs={'username': self.request.user.username}))
 
 
 class NotificationsReadList(LoginRequiredMixin, UserPassesTestMixin, ListView):
@@ -971,6 +988,9 @@ class Notifications(LoginRequiredMixin, UserPassesTestMixin, View):
 
 
 class NotificationUnreadList(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """
+    Display unread notifications
+    """
     model = Notification
     template_name = 'viperchat/notification_unread_list.html'
 
@@ -999,6 +1019,74 @@ class NotificationDetail(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     def get_object(self):
         notification = Notification.objects.get(id=self.kwargs['pk'])
         return notification
+    
+
+class NotificationDelete(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Notification
+
+    def test_func(self):
+        if self.request.user == self.get_object().receiver:
+            return True
+        raise PermissionDenied
+    
+    def get_object(self):
+        notification = Notification.objects.get(id=self.kwargs['pk'])
+        return notification
+    
+    def get(self, *args, **kwargs):
+        #   Dont need to confirm delete
+        return self.post(*args, **kwargs)
+    
+    def get_success_url(self):
+        return reverse('notification_list', kwargs={'username': self.request.user})
+
+
+class AllNotificationsDelete(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """
+    Delete user's all notifications
+    """
+    model = Notification
+
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        notifications = Notification.objects.filter(receiver=self.request.user)
+        if notifications.count() == 0:
+            return False
+        if self.request.user == user:
+            return True
+        raise PermissionDenied
+    
+    def get(self, *args, **kwargs):
+        notifications =Notification.objects.filter(receiver=self.request.user)
+        notifications.delete()
+        return redirect(self.get_success_url())    
+    
+    def get_success_url(self):
+        return reverse('notification_list', kwargs={'username': self.request.user})
+    
+
+class NotifiacationsDeleteConfirm(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """
+    Delete all notifications must be confirm
+    """
+    model = Notification
+    template_name = 'viperchat/notification_delete_confirm.html'
+
+    def test_func(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        user = User.objects.get(username=self.kwargs['username'])
+        notifications = Notification.objects.filter(receiver=self.request.user)
+        if notifications.count() == 0:
+            return False
+        if self.request.user == user:
+            return True
+        raise PermissionDenied
+
+    def post(self, request, *args, **kwargs):
+        if 'accept' in self.request.POST:
+            return redirect(reverse('all_notifications_delete', kwargs={'username': self.request.user}))
+        else:
+            return redirect(reverse('notification_list', kwargs={'username': self.request.user}))
     
 
 class FriendRequestList(LoginRequiredMixin, ListView):

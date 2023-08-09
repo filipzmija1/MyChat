@@ -3,6 +3,10 @@
 
 {% block notifications %}
 <h2>All Notifications</h2>
+    {% if notifications.count > 0 %}
+    <a href="{% url 'notification_delete_confirm' request.user %}"><button>Delete all notifications</button></a>
+    {% endif %}
+<br>
 {% for notification in notifications %}
 <li>{{ notification.description }} - {{ notification.date_created }} </li>
 {% endfor %}

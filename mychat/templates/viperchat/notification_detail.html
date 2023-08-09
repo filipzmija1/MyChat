@@ -1,9 +1,10 @@
-{% extends 'viperchat/base.html' %}
+{% include 'viperchat/notifications.html' %}
 
-{% block title %}Notification details {% endblock %}
 
-{% block content %}
+{% block notifications %}
 <h2>Notification details</h2>
 {{ notification.description }}<br>
 {{ notification.date_created }}<br>
+<a href="{% url 'set_unread' username=request.user.username pk=notification.id %}"><button>Mark as unread</button></a> | 
+<a href="{% url 'notification_delete' username=request.user.username pk=notification.id %}"><button>Delete notification</button></a>
 {% endblock %}

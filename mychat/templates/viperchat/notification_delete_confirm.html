@@ -1,0 +1,11 @@
+{% include 'viperchat/notifications.html' %}
+
+{% block notifications %}
+<h2>Confirm delete</h2>
+<form method="POST" action="">
+    {% csrf_token %}
+    <input type="submit" value="Accept" name="accept">
+    <input type="submit" value="Decline" name="decline">
+</form>
+
+{% endblock %}
