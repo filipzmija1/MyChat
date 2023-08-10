@@ -1,8 +1,8 @@
-{% extends 'viperchat/base.html' %}
+{% include 'viperchat/user_profile.html' %}
 
-{% block title %}Profile permissions {% endblock %}
 
-{% block content %}
+{% block user %}
+<h2>Profile permissions</h2>
  <form action="" method="POST">
     {% csrf_token %}
     {{ form.as_p }}

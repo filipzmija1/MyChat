@@ -1,8 +1,7 @@
-{% extends 'viperchat/base.html' %}
+{% include 'viperchat/user_profile.html' %}
 
-{% block title %}Invite details {% endblock %}
 
-{% block content %}
+{% block user %}
 Server: {{ invite.server }} <br>
 Sender:<a href="{% url 'user_detail' invite.invitation_sender.username %}"></a> {{ invite.invitation_sender }}<br>
 <form method="POST">

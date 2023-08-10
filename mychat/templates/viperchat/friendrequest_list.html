@@ -1,8 +1,7 @@
-{% extends 'viperchat/base.html' %}
+{% include 'viperchat/user_profile.html' %}
 
-{% block title %} Friend Requests {% endblock %}
 
-{% block content %}
+{% block user %}
 <h2>Friend invitations</h2>
 {% for request in friend_requests %}
 {{ request.description }} - <a href="{% url 'friend_request_detail' request.id %}">details</a>

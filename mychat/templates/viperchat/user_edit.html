@@ -1,8 +1,6 @@
-{% extends 'viperchat/base.html' %}
+{% include 'viperchat/user_profile.html' %}
 
-{% block title %}Edit profile {% endblock %}
-
-{% block content %}
+{% block user %}
 <h1>Edit profile</h1>
 <form action="" method="POST">
     {% csrf_token %}

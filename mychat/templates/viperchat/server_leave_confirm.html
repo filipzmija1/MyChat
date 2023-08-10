@@ -1,0 +1,10 @@
+{% include 'viperchat/server_detail.html' %}
+
+{% block room %}
+<h2>Leave confirm</h2>
+<form action="" method="POST">
+    {% csrf_token %}
+    <input type="submit" value="Accept" name="accept">
+    <input type="submit" value="Decline" name="decline">
+</form>
+{% endblock %}

@@ -1,8 +1,7 @@
-{% extends 'viperchat/base.html' %}
+{% include 'viperchat/user_profile.html' %}
 
-{% block title %}Notifications {% endblock %}
 
-{% block content %}
+{% block user %}
 <h2>Notifications</h2>
 <a href="{% url 'notification_read_list' request.user %}">Read notifcations </a>| 
 <a href="{% url 'notification_unread_list' request.user %}">Unread notifications</a> |

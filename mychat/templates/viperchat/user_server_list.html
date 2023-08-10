@@ -1,8 +1,7 @@
-{% extends 'viperchat/base.html' %}
+{% include 'viperchat/user_profile.html' %}
 
-{% block title %}Your servers {% endblock %}
-
-{% block content %}
+{% block user %}
+<h2>Your servers</h2>
 {% for server in servers %}
 <li><a href="{% url 'server_detail' server.id %}">{{ server.name }}</a></li>
 {% endfor %}

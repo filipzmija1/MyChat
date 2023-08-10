@@ -3,11 +3,12 @@
 {% block title %}Server details {% endblock %}
 
 {% block content %}
-<h2><a href="{% url 'server_detail' server.id %}">{{ server.name }}</a> </h2>
+<h2><a href="{% url 'server_detail' server.pk %}">{{ server.name }}</a> </h2>
 {% if messages %}
     {% for message in messages %}
         <span style='color:green'>{{ message }}</span>
     {% endfor %}
+    <br>
 {% endif %}
 {% for group in server_groups %}
 {% if request.user in group|group_users and create_permission in group.permissions.all %}
@@ -21,7 +22,10 @@
 <a href="{% url 'server_users_list' server.id %}"><button>Manage users</button> </a> |
 {% endif %}
 {% if request.user in group|group_users and send_invitation_permission in group.permissions.all %}
-<a href="{%url 'server_invite' server.id %}"><button>Invite to server</button></a> |
+<a href="{%url 'server_invite' server.id %}"><button>Invite to server</button></a> | 
+{% if request.user in server.users.all %}
+<a href="{% url 'server_leave_confirm' server.id %}"><button>Leave server</button></a> | 
+{% endif %}
 {% endif %}
 {% endfor %}
 
@@ -43,8 +47,9 @@ Users:
 {% endfor %}
 <br>
 {% endif %}
-
+{% if server.is_private == True %}
 {% check_if_logged_user_private_room_permission request.user server as private_room_permission %}
+{% endif %}
 
 Rooms: {% for room in server.room_set.all %}
 {% if room.is_private == False %}

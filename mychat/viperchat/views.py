@@ -9,6 +9,7 @@ from django.views import View
 from django.views.generic.edit import CreateView, UpdateView, FormView, DeleteView, FormMixin
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.views.generic import ListView, DetailView
+from django.views.generic.base import RedirectView
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied
 from django.contrib.auth.hashers import check_password
@@ -21,7 +22,7 @@ from django.utils import timezone
 
 from .models import Room, Notification, FriendRequest, ServerInvite, Message, ServerPermissionSettings, Server, \
                  UserPermissionSettings
-from .forms import ResetPasswordForm, SearchForm, RoomManagementForm, SendMessageForm, ServerPermissionsForm, ServerEditForm, \
+from .forms import ResetPasswordForm, SearchForm, SendMessageForm, ServerPermissionsForm, ServerEditForm, \
                 UserPermissionForm, SearchUserForm
 from .permissions import *
 from .context_processor import *
@@ -88,7 +89,68 @@ class GiveInitialPermissions(LoginRequiredMixin, CreateView):
         initial_server_permissions(server_owners, server_masters, server_moderators, server_members)
 
         return redirect(reverse('server_detail', kwargs={'pk': server.pk}))
+    
 
+class ServerLeaveConfirm(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    """
+    If logged in user is one only owner in server he cant leave unless there is no others in server
+    """
+    model = Server
+    template_name = 'viperchat/server_leave_confirm.html'
+
+    def test_func(self):
+        if self.request.user in self.get_object().users.all():
+            return True
+        raise PermissionDenied
+
+    def get_object(self):
+        server = Server.objects.get(id=self.kwargs['pk'])
+        return server
+
+    def post(self, request, *args, **kwargs):
+        server = self.get_object()
+        if 'accept' in self.request.POST:
+            return redirect(reverse('server_leave', kwargs={'pk': server.id}))
+        if 'decline' in self.request.POST:
+            return redirect(reverse('server_detail', kwargs={'pk': server.id}))
+
+    def get_context_name(self, **kwargs):
+        context = super().get_context_name(**kwargs)
+        server = self.get_object()
+        context['server'] = server
+        context['server_groups'] = Server.objects.filter(name__startswith=f'{server.name}_')
+        return context
+            
+
+class ServerLeave(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    model = Server
+    
+    def test_func(self):
+        server_owners = Group.objects.get(name=f'{self.get_object().name}_owners')
+        if self.request.user in server_owners.user_set.all() and self.get_object().users.all().count() == 1:
+            return True
+        if self.request.user in server_owners.user_set.all() and server_owners.user_set.all().count() > 1:
+            return True
+        if self.request.user in server_owners.user_set.all() and \
+        server_owners.user_set.all().count() == 1 and \
+        self.get_object().users.all().count() > 1:
+            return False
+        if self.request.user in self.get_object().users.all():
+            return True   
+
+    def get_object(self):
+        server = Server.objects.get(id=self.kwargs['pk'])
+        return server
+    
+    def get(self, *args, **kwargs):
+        self.get_object().users.remove(self.request.user)
+        return redirect(reverse('home'))
+
+    def get_context_name(self, **kwargs):
+        context = super().get_context_name(**kwargs)
+        server = self.get_object()
+        context['server'] = server
+        return context
 
 class ServerDetails(LoginRequiredMixin, DetailView):
     model = Server
@@ -652,7 +714,7 @@ class UserServerInvitesList(LoginRequiredMixin, UserPassesTestMixin, ListView):
 
 class ServerInviteDetail(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     model = ServerInvite
-    template_name = 'viperchat/server_invite_list.html'
+    template_name = 'viperchat/server_invite_detail.html'
     context_object_name = 'invite'
 
     def test_func(self):
@@ -667,8 +729,10 @@ class ServerInviteDetail(LoginRequiredMixin, UserPassesTestMixin, DetailView):
     
     def post(self, request,*args, **kwargs):
         invite = self.get_object()
+        members_group = Group.objects.get(name=f'{invite.server.name}_members')
         if 'accept_button' in self.request.POST:
             invite.server.users.add(self.request.user)
+            members_group.user_set.add(self.request.user)
             invite.status = 'accepted'
         if 'decline_button' in self.request.POST:
             invite.status = 'declined'
