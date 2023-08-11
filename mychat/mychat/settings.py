@@ -49,6 +49,7 @@ INSTALLED_APPS = [
 
     # Local
     'viperchat.apps.ViperchatConfig',
+    'channels',
 ]
 
 MIDDLEWARE = [
