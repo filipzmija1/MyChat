@@ -61,7 +61,7 @@ class CreateServer(LoginRequiredMixin, CreateView):
 
 class GiveInitialPermissions(LoginRequiredMixin, CreateView):
     """
-    Creates one room(general), server groups and gives them default permissions
+    Creates one room(general), server  groups and gives them default permissions
     """
     model = Room
     fields = []
