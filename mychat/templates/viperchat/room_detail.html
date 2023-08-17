@@ -19,13 +19,66 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
     {% endif %}
    {% if request.user in deleters or request.user == message.author %} 
 | <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</li><br>
+
+<div id="server-id" data-server-id="{{ server_id }}"></div>
+<textarea id="chat-log" cols="100" rows="20" readonly>{% for message in messages %}
+{{message.author}}: {{ message.content }}{% endfor %}
+</textarea><br>
+        <input id="chat-message-input" type="text" size="100"><br>
+        <input id="chat-message-submit" type="button" value="Send">
+        {{ server_id|json_script:"server-id" }}
+        {{ pk|json_script:"room-id" }}
+
 {% check_if_logged_user_have_permission request.user server send_message_permission as message_permission %}
 {% if message_permission == True %}
-<form action="" method="POST">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Send">
-</form>
+<script>
+     const roomId = JSON.parse(document.getElementById('room-id').textContent);
+     const serverId = document.getElementById('server-id').getAttribute('data-server-id');
+        const chatLog = document.querySelector('#chat-log');
+        chatLog.scrollTop = chatLog.scrollHeight;
+
+        const chatSocket = new WebSocket(
+            'ws://'
+            + window.location.host
+            + '/ws/server/'
+            + serverId
+            + '/rooms/'
+            + roomId
+
+        );
+        console.log(roomId);
+        console.log(serverId);
+        chatSocket.onmessage = function(e) {
+            const data = JSON.parse(e.data);
+            if (data.message.split(' ')[1] === '') {
+
+            }
+            else {
+            chatLog.value += (data.message + '\n');
+            console.log(data.message.split(' '))
+           }
+        };
+
+
+        chatSocket.onclose = function(e) {
+            console.error('Chat socket closed unexpectedly');
+        };
+
+        document.querySelector('#chat-message-input').focus();
+        document.querySelector('#chat-message-input').onkeyup = function(e) {
+            if (e.key === 'Enter') {  // enter, return
+                document.querySelector('#chat-message-submit').click();
+            }
+        };
+
+        document.querySelector('#chat-message-submit').onclick = function(e) {
+            const messageInputDom = document.querySelector('#chat-message-input');
+            const message = messageInputDom.value;
+            chatSocket.send(JSON.stringify({'message': message}));
+            messageInputDom.value = '';
+            chatLog.scrollTop = chatLog.scrollHeight; 
+        };
+</script>
 {% endif %}
 
 {% endblock %}
