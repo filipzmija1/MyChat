@@ -2,7 +2,7 @@
 
 
 {% block user %}
-<h2>Notifications</h2>
+<h1>Notifications</h1>
 <a href="{% url 'notification_read_list' request.user %}">Read notifcations </a>| 
 <a href="{% url 'notification_unread_list' request.user %}">Unread notifications</a> |
 <a href="{% url 'notification_list' request.user %}">All notifications</a> |

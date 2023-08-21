@@ -36,14 +36,12 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
      const serverId = document.getElementById('server-id').getAttribute('data-server-id');
         const chatLog = document.querySelector('#chat-log');
         chatLog.scrollTop = chatLog.scrollHeight;
-
+        console.log(window.location);
         const chatSocket = new WebSocket(
             'ws://'
             + window.location.host
-            + '/ws/server/'
-            + serverId
-            + '/rooms/'
-            + roomId
+            + window.location.pathname
+            + '/'
 
         );
         console.log(roomId);
