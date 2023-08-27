@@ -392,7 +392,10 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
         server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
         room = self.get_object()
         show_private_room_permission = Permission.objects.get(codename='display_private_room_data')
+        send_message_permission = Permission.objects.get(codename='send_messages_in_server')
         logged_user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
+        if not send_message_permission in logged_user_group[0].permissions.all():
+            raise PermissionDenied
         if room.is_private == True and show_private_room_permission in logged_user_group[0].permissions.all():
             return True
         elif room.is_private == False and self.request.user in server.users.all():
@@ -423,21 +426,21 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
                 context["deleters"] = group.user_set.all()
         return context
     
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        send_message_permission = Permission.objects.get(codename='send_messages_in_server')
-        server_groups = Group.objects.filter(name__startswith=f'{self.get_object().server.name}_')
-        user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
-        if not send_message_permission in user_group[0].permissions.all():
-            raise PermissionDenied
-        if form.is_valid():
-            room = self.get_object()
-            author = self.request.user
-            message = form.cleaned_data['message']
-            Message.objects.create(room=room, author=author, content=message)
-            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
-        else:
-            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
+    # def post(self, request, *args, **kwargs):
+    #     form = self.get_form()
+    #     send_message_permission = Permission.objects.get(codename='send_messages_in_server')
+    #     server_groups = Group.objects.filter(name__startswith=f'{self.get_object().server.name}_')
+    #     user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
+    #     if not send_message_permission in user_group[0].permissions.all():
+    #         raise PermissionDenied
+    #     if form.is_valid():
+    #         room = self.get_object()
+    #         author = self.request.user
+    #         message = form.cleaned_data['message']
+    #         Message.objects.create(room=room, author=author, content=message)
+    #         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
+    #     else:
+    #         return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
 
 
 class ServerEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
