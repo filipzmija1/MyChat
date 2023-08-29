@@ -7,7 +7,8 @@
         const data = await response.json();
         const {location, current} = data;
         const weather = weatherDiv.appendChild(document.createElement('span'));
-        weather.innerText = `Location: ${location.name} | temp: ${current.temp_c} C`;
+        const celsiusSymbol = '°'
+        weather.innerText = `Location: ${location.name} | temp: ${current.temp_c} ${celsiusSymbol}C`;
         console.log(data);
     }catch(error) {
         console.log(error);
