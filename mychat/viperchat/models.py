@@ -141,7 +141,6 @@ class Message(models.Model):
     chat = models.ForeignKey(Chat, on_delete=models.CASCADE, blank=True, null=True)
     room = models.ForeignKey(Room, on_delete=models.CASCADE, blank=True, null=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='author')
-    message_receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='message_receiver', blank=True, null=True)
     content = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
     date_edited = models.DateTimeField(null=True, blank=True)

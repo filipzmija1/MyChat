@@ -53,23 +53,10 @@ Friends: <br>{% for friend in user.friends.all %}
 
 <br>
 {% if chat %}
-{% for message in chat %}
-<li> {{ message.author }}: {{ message.content }} --------{% if message.date_edited %} Edited: {{ message.date_edited }} {% else %} {{ message.date_created }} {% endif %} | 
-    {% if request.user == message.author %}
-    <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a>
-    <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>
-    {% endif %}
-{% endfor %}
+
+<a href="{% url 'chat_create' username %}"><button>Open chat</button></a>
 {% endif %}
-{% if request.user != user %}
-{% if request.user in user.friends.all %}
-<form method="POST" action="">
-    {% csrf_token %}
-    {{ form.as_p }}
-    <input type="submit" value="Send">
-</form>
-{% endif %}
-{% endif %}
+
 {% endif %}
 
 {% endblock %}

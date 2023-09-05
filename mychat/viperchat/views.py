@@ -21,7 +21,7 @@ from django.contrib.auth.models import Group, Permission
 from django.utils import timezone
 
 from .models import Room, Notification, FriendRequest, ServerInvite, Message, ServerPermissionSettings, Server, \
-                 UserPermissionSettings
+                 UserPermissionSettings, Chat
 from .forms import ResetPasswordForm, SearchForm, SendMessageForm, ServerPermissionsForm, ServerEditForm, \
                 UserPermissionForm, SearchUserForm
 from .permissions import *
@@ -719,9 +719,7 @@ class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
         context['friend_request_mirror'] = friend_request_mirror
         context['username'] = self.get_object().username
         if self.request.user in self.get_object().friends.all():    # Display chat
-            friend_messages = Message.objects.filter(author=self.get_object(), message_receiver=self.request.user)
-            logged_user_messages = Message.objects.filter(author=self.request.user, message_receiver=self.get_object())
-            context['chat'] = (friend_messages | logged_user_messages).order_by('date_created')
+            context['chat'] = True
             return context
         return context
     
@@ -1282,3 +1280,48 @@ class FriendRequestDelete(LoginRequiredMixin, DeleteView):
         self.get_object().delete()
         return redirect('user_detail', username=receiver.username)
     
+
+class ChatCreate(LoginRequiredMixin, UserPassesTestMixin, View):
+    model = Chat
+    
+    def test_func(self):
+        user = self.get_object()
+        if user in self.request.user.friends.all():
+            return True
+        return False
+    
+    def get(self, request, *args, **kwargs):
+        chats = Chat.objects.all()
+        chat = [chat for chat in chats if self.request.user in chat.participants.all() and self.get_object() in chat.participants.all()]
+        if not chat:
+            new_chat = Chat.objects.create()
+            new_chat.participants.add(self.request.user)
+            new_chat.participants.add(self.get_object())
+            return redirect(reverse('users_chat', kwargs={'pk': new_chat.id}))
+        else:
+            return redirect(reverse('users_chat', kwargs={'pk': chat[0].id}))
+
+    def get_object(self):
+        user = User.objects.get(username=self.kwargs['username'])
+        return user
+    
+
+class ChatDetails(LoginRequiredMixin, UserPassesTestMixin, DetailView):
+    model = Chat
+    template_name = 'viperchat/chat_detail.html'
+    context_object_name = 'chat'
+
+    def test_func(self):
+        if self.request.user in self.get_object().participants.all():
+            return True
+        return False
+
+    def get_object(self):
+        chat = Chat.objects.get(id=self.kwargs['pk'])
+        return chat
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['participants'] = self.get_object().participants.all()
+        context['all_messages'] = Message.objects.filter(chat=self.get_object())
+        return context

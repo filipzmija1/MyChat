@@ -2,7 +2,8 @@ from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin
 
-from .models import Room, Notification, FriendRequest, Message, ServerPermissionSettings, Server, UserPermissionSettings, ServerInvite
+from .models import Room, Notification, FriendRequest, Message, ServerPermissionSettings, Server, UserPermissionSettings, \
+      ServerInvite, Chat
 from .forms import UserCreationForm, UserChangeForm
 
 
@@ -28,3 +29,4 @@ admin.site.register(ServerPermissionSettings)
 admin.site.register(Server)
 admin.site.register(UserPermissionSettings)
 admin.site.register(ServerInvite)
+admin.site.register(Chat)
