@@ -27,7 +27,6 @@ urlpatterns = [
     path('server/<uuid:pk>/create-room/', vchat.CreateRoom.as_view(), name='create_room'),
     path('accounts/', include('allauth.urls')),
     path('rooms/', vchat.ServerList.as_view(), name='servers'),
-    path('user/<slug:username>', vchat.UserProfile.as_view(), name='user_detail'),
     path('server/<uuid:server_id>/rooms/<uuid:pk>/edit', vchat.RoomEdit.as_view(), name='room_edit'),
     path('edit-user/<slug:username>', vchat.UserProfileEdit.as_view(), name='edit_profile'),
     path('edit-user/<slug:username>/permissions', vchat.UserProfilePermissions.as_view(), name='change_profile_permissions'),

@@ -432,22 +432,6 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
                 context["deleters"] = group.user_set.all()
         return context
     
-    def post(self, request, *args, **kwargs):
-        form = self.get_form()
-        send_message_permission = Permission.objects.get(codename='send_messages_in_server')
-        server_groups = Group.objects.filter(name__startswith=f'{self.get_object().server.name}_')
-        user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
-        if not send_message_permission in user_group[0].permissions.all():
-            raise PermissionDenied
-        if form.is_valid():
-            room = self.get_object()
-            author = self.request.user
-            message = form.cleaned_data['message']
-            Message.objects.create(room=room, author=author, content=message)
-            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
-        else:
-            return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
-
 
 class RoomMessagesManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
     """
@@ -733,6 +717,7 @@ class UserProfile(LoginRequiredMixin, FormMixin, DetailView):
         context['user_settings'] = user_profile_settings
         context['friend_request'] = friend_request
         context['friend_request_mirror'] = friend_request_mirror
+        context['username'] = self.get_object().username
         if self.request.user in self.get_object().friends.all():    # Display chat
             friend_messages = Message.objects.filter(author=self.get_object(), message_receiver=self.request.user)
             logged_user_messages = Message.objects.filter(author=self.request.user, message_receiver=self.get_object())

@@ -118,6 +118,19 @@ class Room(models.Model):
         return self.name
 
 
+class Chat(models.Model):
+    """
+    Model destined to chat between two users
+    """
+    id = models.UUIDField(
+    default=uuid.uuid4,
+    unique=True,
+    primary_key=True,
+    editable=False
+    )  
+    participants = models.ManyToManyField(User, related_name='chats')
+
+
 class Message(models.Model):
     id = models.UUIDField(
         default=uuid.uuid4,
@@ -125,6 +138,7 @@ class Message(models.Model):
         primary_key=True,
         editable=False
     )
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE, blank=True, null=True)
     room = models.ForeignKey(Room, on_delete=models.CASCADE, blank=True, null=True)
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='author')
     message_receiver = models.ForeignKey(User, on_delete=models.CASCADE, related_name='message_receiver', blank=True, null=True)
@@ -201,3 +215,4 @@ class ServerInvite(models.Model):
     
     def __str__(self):
         return f'server: {self.server.name} receiver: {self.receiver.username}'
+    

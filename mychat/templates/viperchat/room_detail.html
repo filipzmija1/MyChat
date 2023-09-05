@@ -20,12 +20,9 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
 </p>
 {% check_if_logged_user_have_permission request.user server send_message_permission as message_permission %}
 
-<textarea id="chat-log" cols="100" rows="20" readonly>{% for message in all_messages %}{{ message.author }}: {{ message.content }} - {{ message.date_created }} {% if message.date_edited %} Edited: {{ message.date_edited }} {% else %} {{ message.date_created }} {% endif %}
-        {% if request.user == message.author %}
-        <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a>
-        {% endif %}
-       {% if request.user in deleters or request.user == message.author %} 
-    | <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</textarea><br>
+<textarea id="chat-log" cols="100" rows="20" readonly>{% for message in all_messages %}
+{{message.author}}: {{ message.content }}{% endfor %}
+</textarea><br>
 {% if message_permission == True %}
 <input id="chat-message-input" type="text" size="100"><br>
 <input id="chat-message-submit" type="button" value="Send">
@@ -34,6 +31,8 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
 <script>
     const roomId = JSON.parse(document.getElementById('room-id').textContent);
     const serverId = JSON.parse(document.getElementById('server-id').textContent);
+    const chatLog = document.querySelector('#chat-log');
+    chatLog.scrollTop = chatLog.scrollHeight;
     console.log(roomId);
     console.log(serverId);
     const chatSocket = new WebSocket(
