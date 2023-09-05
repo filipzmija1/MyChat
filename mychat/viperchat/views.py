@@ -449,6 +449,59 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
             return redirect(reverse('room_detail', kwargs={'pk': self.get_object().pk, 'server_id': self.get_object().server.id}))
 
 
+class RoomMessagesManage(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """
+    User can manage others messages
+    """
+    model = Message
+    template_name = 'viperchat/room_messages_manage.html'
+    context_object_name = 'room_messages'
+
+    def test_func(self):
+        delete_message_permission = Permission.objects.get(codename='delete_message_from_server')
+        server = Server.objects.get(id=self.kwargs['server_id'])
+        server_groups = Group.objects.filter(name__startswith=f'{server.name}_')
+        user_group = [group for group in server_groups if self.request.user in group.user_set.all()]
+        if delete_message_permission in user_group[0].permissions.all():
+            return True
+        return False
+    
+    def get_queryset(self):
+        room = Room.objects.get(id=self.kwargs['pk'])
+        messages = Message.objects.filter(room=room).order_by('-date_created')
+        return messages
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['server'] = Server.objects.get(id=self.kwargs['server_id'])
+        return context
+
+
+class RoomUserOwnMessages(LoginRequiredMixin, UserPassesTestMixin, ListView):
+    """
+    Delete and editing own messages
+    """
+    model = Message
+    template_name = 'viperchat/room_user_own_messages.html'
+    context_object_name = 'user_messages'
+
+    def test_func(self):
+        room = Room.objects.get(id=self.kwargs['pk'])
+        if self.request.user in room.server.users.all():
+            return True
+        return False
+
+    def get_queryset(self):
+        room = Room.objects.get(id=self.kwargs['pk'])
+        user_messages_in_room = Message.objects.filter(room=room, author=self.request.user)
+        return user_messages_in_room
+    
+    def get_context_data(self, *args, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['server'] = Server.objects.get(id=self.kwargs['server_id'])
+        return context
+
+
 class ServerEdit(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Server
     form_class = ServerEditForm

@@ -1,0 +1,9 @@
+{% include 'viperchat/server_detail.html' %}
+
+
+{% block room %}
+<h3>Your messages</h3>
+{% for message in user_messages %}
+<li>{{ message.content }} - <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a> | <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a></li>
+{% endfor %}
+{% endblock %}

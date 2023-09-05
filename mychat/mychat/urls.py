@@ -22,6 +22,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', vchat.HomePage.as_view(), name='home'),
     path('', include('viperchat.urls')),
+    path('server/<uuid:server_id>/rooms/<uuid:pk>/<slug:username>', vchat.RoomUserOwnMessages.as_view(), name='user_messages_in_room'),
+    path('server/<uuid:server_id>/rooms/<uuid:pk>/messages/manage', vchat.RoomMessagesManage.as_view(), name='manage_room_messages'),
     path('server/<uuid:pk>/create-room/', vchat.CreateRoom.as_view(), name='create_room'),
     path('accounts/', include('allauth.urls')),
     path('rooms/', vchat.ServerList.as_view(), name='servers'),

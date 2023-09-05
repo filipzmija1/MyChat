@@ -12,27 +12,21 @@
 About room: {{ room.description }}<br>
 Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<br> {% endif %}
 <br>
-<h3>Chat:</h3> {% for message in all_messages %}
-<li> {{ message.author }}: {{ message.content }} - {{ message.date_created }} {% if message.date_edited %} Edited: {{ message.date_edited }} {% else %} {{ message.date_created }} {% endif %}
-    {% if request.user == message.author %}
-    <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a>
+<h3>Chat:</h3>
+<p><a href="{% url 'user_messages_in_room' server_id=server_id pk=room_id username=request.user.username %}"><button>Manage your own messages</button></a>
+    {% if request.user in deleters %}
+        <a href="{% url 'manage_room_messages' server_id=server_id pk=room_id %}"><button>Manage all messages</button></a>
     {% endif %}
-   {% if request.user in deleters or request.user == message.author %} 
-| <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</li><br>
-
+</p>
 {% check_if_logged_user_have_permission request.user server send_message_permission as message_permission %}
-{% if message_permission == True %}
-<textarea cols="100" rows="20" readonly>{% for message in messages %}
-    {{message.author}}: {{ message.content }}{% endfor %}
-    </textarea><br>
-            <form action="" method="POST">
-                {% csrf_token %}
-                {{ form.as_p }}
-                <input type="submit" value="Send">
-            </form>
-{% endif %}
 
-<textarea id="chat-log" cols="100" rows="20"></textarea><br>
+<textarea id="chat-log" cols="100" rows="20" readonly>{% for message in all_messages %}{{ message.author }}: {{ message.content }} - {{ message.date_created }} {% if message.date_edited %} Edited: {{ message.date_edited }} {% else %} {{ message.date_created }} {% endif %}
+        {% if request.user == message.author %}
+        <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a>
+        {% endif %}
+       {% if request.user in deleters or request.user == message.author %} 
+    | <a href="{% url 'delete_message' message.pk %}"><button>Delete message</button></a>{% endif %} {% endfor %}</textarea><br>
+{% if message_permission == True %}
 <input id="chat-message-input" type="text" size="100"><br>
 <input id="chat-message-submit" type="button" value="Send">
 {{ room_id|json_script:"room-id" }}
@@ -77,5 +71,9 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
         messageInputDom.value = '';
     };
 </script>
+
+{% endif %}
+
+
 
 {% endblock %}
