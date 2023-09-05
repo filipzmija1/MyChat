@@ -420,11 +420,13 @@ class RoomDetail(LoginRequiredMixin, UserPassesTestMixin, FormMixin, DetailView)
         delete_message_permission = Permission.objects.get(codename='delete_message_from_server')
         send_message_permission = Permission.objects.get(codename='send_messages_in_server')
         server_groups = Group.objects.filter(name__startswith=f'{server.name}_')    # Get all server groups
-        context['messages'] = Message.objects.filter(room=self.get_object())
+        context['all_messages'] = Message.objects.filter(room=self.get_object())
         context['form'] = SendMessageForm()
         context['server'] = self.get_object().server
         context['server_groups'] = server_groups
         context['send_message_permission'] = send_message_permission
+        context['room_id'] = self.get_object().id
+        context['server_id'] = self.get_object().server.id
         for group in server_groups:
             if logged_user in group.user_set.all() and delete_message_permission in group.permissions.all():
                 context["deleters"] = group.user_set.all()

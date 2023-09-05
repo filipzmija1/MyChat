@@ -12,7 +12,7 @@
 About room: {{ room.description }}<br>
 Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<br> {% endif %}
 <br>
-<h3>Chat:</h3> {% for message in messages %}
+<h3>Chat:</h3> {% for message in all_messages %}
 <li> {{ message.author }}: {{ message.content }} - {{ message.date_created }} {% if message.date_edited %} Edited: {{ message.date_edited }} {% else %} {{ message.date_created }} {% endif %}
     {% if request.user == message.author %}
     <a href="{% url 'message_edit' message.pk %}"><button>Edit message</button></a>
@@ -22,7 +22,7 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
 
 {% check_if_logged_user_have_permission request.user server send_message_permission as message_permission %}
 {% if message_permission == True %}
-<textarea id="chat-log" cols="100" rows="20" readonly>{% for message in messages %}
+<textarea cols="100" rows="20" readonly>{% for message in messages %}
     {{message.author}}: {{ message.content }}{% endfor %}
     </textarea><br>
             <form action="" method="POST">
@@ -31,5 +31,51 @@ Room privacy: {% if room.is_private == False %} Public <br> {% else %} Private<b
                 <input type="submit" value="Send">
             </form>
 {% endif %}
+
+<textarea id="chat-log" cols="100" rows="20"></textarea><br>
+<input id="chat-message-input" type="text" size="100"><br>
+<input id="chat-message-submit" type="button" value="Send">
+{{ room_id|json_script:"room-id" }}
+{{ server_id|json_script:"server-id"}}
+<script>
+    const roomId = JSON.parse(document.getElementById('room-id').textContent);
+    const serverId = JSON.parse(document.getElementById('server-id').textContent);
+    console.log(roomId);
+    console.log(serverId);
+    const chatSocket = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws/server/'
+        + serverId
+        + '/rooms/'
+        + roomId
+        + '/'
+    );
+
+    chatSocket.onmessage = function(e) {
+        const data = JSON.parse(e.data);
+        document.querySelector('#chat-log').value += (data.message + '\n');
+    };
+
+    chatSocket.onclose = function(e) {
+        console.error('Chat socket closed unexpectedly');
+    };
+
+    document.querySelector('#chat-message-input').focus();
+    document.querySelector('#chat-message-input').onkeyup = function(e) {
+        if (e.key === 'Enter') {  // enter, return
+            document.querySelector('#chat-message-submit').click();
+        }
+    };
+
+    document.querySelector('#chat-message-submit').onclick = function(e) {
+        const messageInputDom = document.querySelector('#chat-message-input');
+        const message = messageInputDom.value;
+        chatSocket.send(JSON.stringify({
+            'message': message
+        }));
+        messageInputDom.value = '';
+    };
+</script>
 
 {% endblock %}
