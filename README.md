@@ -15,14 +15,11 @@ Installation
 To run MyChat on your local environment, follow these steps:
 
     Clone the repository:
-
-    bash
+Open terminal
 
 git clone https://github.com/filipzmija1/MyChat.git
 
 Navigate to the project directory:
-
-bash
 
 cd MyChat
 
@@ -30,34 +27,72 @@ Optional: Create a virtual environment:
 
 It's recommended to use a virtual environment to isolate project dependencies.
 
-bash
-
 virtualenv venv
 
 Activate the virtual environment:
 
 On Windows:
 
-bash
-
 venv\Scripts\activate
 
 On macOS and Linux:
-
-bash
 
 source venv/bin/activate
 
 Install project dependencies:
 
-bash
-
 pip install -r requirements.txt
 
+Installing Redis Server:
+
+1. Open a terminal window.
+
+2. Update your package list:
+
+sudo apt-get update
+
+3. Install Redis Server:
+
+sudo apt-get install redis-server
+
+4. Start Redis:
+
+sudo service redis-server start
+
+5. Check if Redis is running:
+
+redis-cli ping
+
+If you receive a "PONG" response, Redis is up and running.
+
+### On macOS:
+
+1. Install Redis via Homebrew (if not already installed):
+
+brew install redis
+
+markdown
+
+
+2. Start Redis:
+
+brew services start redis
+
+3. Check if Redis is running:
+
+redis-cli ping
+
+If you receive a "PONG" response, Redis is up and running.
+
+### On Windows:
+
+Redis for Windows can be downloaded from the official GitHub repository: [Redis for Windows](https://github.com/MicrosoftArchive/redis/releases). Follow the installation instructions provided there.
+
+## Project Setup
+
+Once Redis is installed and running on your system, you can proceed with setting up and running the "MyChat" application. Be sure to configure your Django project to connect to the Redis server as needed.
 
 Apply database migrations:
-
-bash
 
 python manage.py makemigrations
 python manage.py migrate
@@ -83,9 +118,7 @@ To configure email handling, you need to set EMAIL_HOST_USER and EMAIL_HOST_PASS
     Replace 'your_smtp_host', smtp_port_number, 'your_email_address', and 'your_email_password' with your actual email server credentials.
 
 Start the development server:
-
-bash
-
+    
     python manage.py runserver
 
     Open the application in your web browser:
