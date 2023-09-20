@@ -3,6 +3,7 @@ MyChat
 MyChat is a chat application that allows users to communicate in real-time. The backend is built using Django, and real-time chat functionality is using JavaScript.
 
 Features
+
     Server and rooms creation: Users can create servers and rooms in servers for specific topics or groups. It enables organized discussions.
     Message history: Chat messages are archived, allowing users to view past conversations.
     Real-time chat with WebSocket: Enables users to exchange messages instantly with other users.
