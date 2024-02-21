@@ -10,7 +10,7 @@ channels-redis==4.1.0
 charset-normalizer==3.2.0
 constantly==15.1.0
 crispy-bootstrap4==2022.1
-cryptography==41.0.3
+cryptography==42.0.4
 daphne==4.0.0
 defusedxml==0.7.1
 deprecation==2.1.0
